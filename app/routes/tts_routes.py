@@ -11,12 +11,17 @@ from werkzeug.utils import secure_filename
 from app.config import Config
 from pydub import AudioSegment
 from pydub.generators import Sine
+from dotenv import load_dotenv
 import requests
+
+load_dotenv()
 
 tts_bp = Blueprint('tts', __name__)
 
 GENERATED_FOLDER = Config.GENERATED_AUDIO_FOLDER
 CLONED_FOLDER = Config.CLONED_VOICE_FOLDER
+
+TTS_BASE_URL = os.getenv("TTS_BASE_URL")
 
 # -------------------
 # Generate TTS Audio
@@ -76,7 +81,7 @@ def generate_tts():
         print(f"TTS API Payload: {tts_payload}")  # Debug log
         
         # Call external TTS API
-        tts_api_url = "https://p7h9kucnnh2d8v-8000.proxy.runpod.net/translate-tts"
+        tts_api_url = f"{TTS_BASE_URL}/translate-tts"
         
         try:
             response = requests.post(tts_api_url, json=tts_payload, timeout=60)
@@ -96,7 +101,7 @@ def generate_tts():
             os.makedirs(GENERATED_FOLDER, exist_ok=True)
             
             # Download audio file
-            base_url = "https://p7h9kucnnh2d8v-8000.proxy.runpod.net"
+            base_url = f"{TTS_BASE_URL}"
             audio_url = tts_response.get('audio_path')
             if audio_url:
                 if not audio_url.startswith('http'):
@@ -243,7 +248,7 @@ def clone_voice():
         data = {'user_id': unique_id}
         
         # Call external voice cloning API
-        clone_api_url = "https://p7h9kucnnh2d8v-8000.proxy.runpod.net/voice/upload"
+        clone_api_url = f"{TTS_BASE_URL}/voice/upload"
         
         try:
             response = requests.post(clone_api_url, files=files, data=data, timeout=60)
