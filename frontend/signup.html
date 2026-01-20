@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="png" href="assests/logo.png">
+  <title>Sign Up - Raket.H Clone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/signin.css" />
+</head>
+<body>
+  <div class="split-container">
+    <div class="left-section">
+      <div class="content-wrapper">
+        <div class="logo">
+          <div style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:bold;">
+            <img src="assests/logo.png" alt="Logo" style="width:32px;height:auto;">
+            Raket.H <span style="color:#ff944d;">Clone</span>
+          </div>
+        </div>
+        <div class="hero-content">
+          <h2>Get <span class="highlight">ready</span> for your business</h2>
+          <h2>& upgrade <span class="highlight">all aspects</span></h2>
+          <p class="description">
+            Raket.H Clone AI Voice Studio is provided for creating professional voice content. 
+            This platform is based on advanced AI technology. Anyone can use and create 
+            amazing voice content for any professional project.
+          </p>
+          <div class="cta-buttons">
+            <a href="index.html" class="btn-primary">Discover More</a>
+            <a href="contact.html" class="btn-secondary">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-section">
+      <div class="form-wrapper">
+        <div class="form-header">
+          <h2>Create Account</h2>
+          <p>Sign up to start using AI Voice Studio</p>
+        </div>
+
+        <form id="signupForm">
+          <div class="form-group">
+            <input id="name" type="text" placeholder="Full Name" required />
+          </div>
+
+          <div class="form-group">
+            <input id="email" type="email" placeholder="Email Address" required />
+          </div>
+
+          <div class="form-group">
+            <div class="password-input-wrapper">
+              <input id="password" type="password" placeholder="Password" required />
+              <span class="password-toggle" onclick="togglePassword('password')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <button type="submit" class="signin-btn">Sign Up</button>
+          
+          <p id="signupErr" class="form-error"></p>
+        </form>
+
+        <div class="form-footer">
+          <p>Already have an account? <a href="signin.html">Sign in</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/password-toggle.js"></script>
+  <script src="js/api-config.js"></script>
+  <script>
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorElement = document.getElementById('signupErr');
+      const submitBtn = document.querySelector('.signin-btn');
+      
+      // Clear previous errors
+      errorElement.textContent = '';
+      
+      // Validation
+      if (!name || !email || !password) {
+        errorElement.textContent = 'Please fill all fields.';
+        errorElement.style.color = 'red';
+        return;
+      }
+      
+      if (password.length < 6) {
+        errorElement.textContent = 'Password must be at least 6 characters long.';
+        errorElement.style.color = 'red';
+        return;
+      }
+      
+      // Show loading state
+      submitBtn.textContent = 'Creating Account...';
+      submitBtn.disabled = true;
+      
+      try {
+        // API call for signup
+        const userData = {
+          email: email,
+          password: password,
+          user_type: 'user'
+        };
+        
+        const response = await API.signup(userData);
+        
+        // Success message
+        errorElement.textContent = 'Account created successfully! Redirecting...';
+        errorElement.style.color = 'green';
+        
+        // Store user data locally for fallback
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const newUser = {
+          name: name,
+          email: email,
+          registeredAt: new Date().toISOString()
+        };
+        
+        // Add to registered users list
+        registeredUsers.push(newUser);
+        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+        
+        // Store current user
+        localStorage.setItem('voiceAppUser', JSON.stringify(newUser));
+        
+        setTimeout(() => {
+          window.location.replace('index.html');
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Signup error:', error);
+        errorElement.textContent = error.message || 'Failed to create account. Please try again.';
+        errorElement.style.color = 'red';
+      } finally {
+        // Reset button state
+        submitBtn.textContent = 'Sign Up';
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

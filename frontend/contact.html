@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="png" href="assests/logo.png">
+  <title>Contact - Raket.H Clone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/website.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:bold;">
+      <img src="assests/logo.png" alt="Logo" style="width:32px;height:auto;">
+      Raket.H <span style="color:#f5751f;">Clone</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+        <li id="dashboardNav" style="display: none;"><a href="dashboard.html">Dashboard</a></li>
+      </ul>
+      <div class="nav-auth-buttons" id="authButtons">
+        <a href="signin.html" class="nav-signin">Sign In</a>
+        <a href="signup.html" class="nav-signup">Sign Up</a>
+      </div>
+      <div class="nav-user-info" id="userInfo" style="display: none;">
+        <span id="userName">Welcome!</span>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="mobile-nav" id="mobileNav">
+        <a href="index.html" class="mobile-nav-item">Home</a>
+        <a href="about.html" class="mobile-nav-item">About</a>
+        <a href="services.html" class="mobile-nav-item">Services</a>
+        <a href="pricing.html" class="mobile-nav-item">Pricing</a>
+        <a href="contact.html" class="mobile-nav-item">Contact</a>
+        <a href="dashboard.html" class="mobile-nav-item" id="mobileDashboard" style="display: none;">Dashboard</a>
+        <a href="#" class="mobile-nav-item" id="mobileLogout" style="display: none;" onclick="logout()">Logout</a>
+        <a href="signin.html" class="mobile-nav-item" id="mobileSignIn">Sign In</a>
+        <a href="signup.html" class="mobile-nav-item" id="mobileSignUp">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <div class="container">
+      <h1>Get In Touch</h1>
+      <p>We'd love to hear from you</p>
+    </div>
+  </section>
+
+  <section class="contact-section">
+    <div class="container">
+      <div class="contact-grid">
+        <div class="contact-info">
+          <h2>Contact Information</h2>
+          <p>Have questions? Reach out to us and we'll get back to you as soon as possible.</p>
+          
+          <div class="info-item">
+            <div class="info-icon">
+              <svg width="40" height="40" viewBox="0 0 100 100" fill="none" stroke="#4ecca3" stroke-width="3">
+                <rect x="15" y="25" width="70" height="50" rx="8" stroke="#4ecca3" stroke-width="3" fill="none"/>
+                <path d="M15 35 L50 55 L85 35" stroke="#4ecca3" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Email</h4>
+              <p>support@rakethclone.com</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">
+              <svg width="40" height="40" viewBox="0 0 100 100" fill="none" stroke="#4ecca3" stroke-width="3">
+                <rect x="30" y="15" width="40" height="70" rx="8" stroke="#4ecca3" stroke-width="3" fill="none"/>
+                <rect x="35" y="25" width="30" height="45" rx="3" stroke="#4ecca3" stroke-width="2" fill="none"/>
+                <circle cx="50" cy="78" r="3" fill="#4ecca3"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Phone</h4>
+              <p>+92 302 5295337</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">
+              <svg width="40" height="40" viewBox="0 0 100 100" fill="none" stroke="#4ecca3" stroke-width="3">
+                <circle cx="50" cy="40" r="8" fill="#4ecca3"/>
+                <path d="M50 15 C35 15 25 25 25 40 C25 60 50 85 50 85 C50 85 75 60 75 40 C75 25 65 15 50 15 Z" stroke="#4ecca3" stroke-width="3" fill="none"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Location</h4>
+              <p>Pakistan</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-form-wrapper">
+          <form class="contact-form" id="contactForm">
+            <div class="form-group">
+              <label>Your Name</label>
+              <input type="text" id="contactName" placeholder="Enter your name" required />
+            </div>
+
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="contactEmail" placeholder="Enter your email" required />
+            </div>
+
+            <div class="form-group">
+              <label>Subject</label>
+              <input type="text" id="contactSubject" placeholder="Enter subject" required />
+            </div>
+
+            <div class="form-group">
+              <label>Message</label>
+              <textarea rows="5" id="contactMessage" placeholder="Your message..." required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 RaketH Clone. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Check if user is logged in
+    const user = localStorage.getItem('voiceAppUser');
+    if (user) {
+      const userData = JSON.parse(user);
+      document.getElementById('authButtons').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('userName').textContent = `Welcome, ${userData.name || userData.email}!`;
+      document.getElementById('dashboardNav').style.display = 'block';
+      
+      // Mobile menu
+      document.getElementById('mobileDashboard').style.display = 'block';
+      document.getElementById('mobileLogout').style.display = 'block';
+      document.getElementById('mobileSignIn').style.display = 'none';
+      document.getElementById('mobileSignUp').style.display = 'none';
+    }
+    
+    function logout() {
+      localStorage.removeItem('voiceAppUser');
+      location.reload();
+    }
+    
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('contactName').value;
+      const email = document.getElementById('contactEmail').value;
+      const subject = document.getElementById('contactSubject').value;
+      const message = document.getElementById('contactMessage').value;
+      
+      try {
+        const response = await fetch('http://127.0.0.1:5000/api/contact/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            subject: subject,
+            message: message
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          alert('Thank you for your message! We will get back to you soon.');
+          this.reset();
+        } else {
+          alert('Error: ' + (result.error || 'Failed to send message'));
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    });
+    
+    function toggleMobileMenu() {
+      const mobileNav = document.getElementById('mobileNav');
+      mobileNav.classList.toggle('show');
+    }
+  </script>
+</body>
+</html>

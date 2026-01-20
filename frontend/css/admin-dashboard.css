@@ -1,0 +1,218 @@
+:root {
+    --primary-color: #4ecca3;
+    --secondary-color: #232931;
+    --accent-color: #393e46;
+    --text-light: #eeeeee;
+}
+
+body {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sidebar {
+    background: var(--secondary-color);
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar .nav-link {
+    color: var(--text-light);
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin: 5px 10px;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+    background: var(--primary-color);
+    color: white;
+    transform: translateX(5px);
+}
+
+.main-content {
+    background: rgba(255,255,255,0.95);
+    min-height: 100vh;
+    border-radius: 20px 0 0 20px;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, var(--primary-color), #45b393);
+    color: white;
+    border-radius: 15px;
+    padding: 6px;
+    margin-bottom: 2px;
+    box-shadow: 0 8px 25px rgba(78, 204, 163, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.stats-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.page-header {
+    background: var(--secondary-color);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #45b393;
+    transform: translateY(-2px);
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1050;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1040;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        z-index: 1045;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        border-radius: 0;
+        padding-top: 70px !important;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+    }
+    
+    .stats-label {
+        font-size: 1rem;
+    }
+    
+    .page-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+    }
+    
+    .col-md-4,
+    .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 15px;
+    }
+    
+    .row.mt-3 .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-card {
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .stats-number {
+        font-size: 1.8rem;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+    }
+    
+    .page-header {
+        padding: 15px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .btn {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .list-group-item {
+        font-size: 0.9rem;
+    }
+    
+    /* Ensure proper button spacing on small screens */
+    .row .col-md-6 {
+        margin-bottom: 20px;
+    }
+    
+    .btn.py-3 {
+        padding: 15px 20px !important;
+    }
+}

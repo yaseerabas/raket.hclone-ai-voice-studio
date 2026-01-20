@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="png" href="assests/logo.png">
+  <title>About Us - Raket.H Clone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/website.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:bold;">
+      <img src="assests/logo.png" alt="Logo" style="width:32px;height:auto;">
+      Raket.H <span style="color:#f5751f;">Clone</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html" class="active">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li id="dashboardNav" style="display: none;"><a href="dashboard.html">Dashboard</a></li>
+      </ul>
+      <div class="nav-auth-buttons" id="authButtons">
+        <a href="signin.html" class="nav-signin">Sign In</a>
+        <a href="signup.html" class="nav-signup">Sign Up</a>
+      </div>
+      <div class="nav-user-info" id="userInfo" style="display: none;">
+        <span id="userName">Welcome!</span>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="mobile-nav" id="mobileNav">
+        <a href="index.html" class="mobile-nav-item">Home</a>
+        <a href="about.html" class="mobile-nav-item">About</a>
+        <a href="services.html" class="mobile-nav-item">Services</a>
+        <a href="pricing.html" class="mobile-nav-item">Pricing</a>
+        <a href="contact.html" class="mobile-nav-item">Contact</a>
+        <a href="dashboard.html" class="mobile-nav-item" id="mobileDashboard" style="display: none;">Dashboard</a>
+        <a href="#" class="mobile-nav-item" id="mobileLogout" style="display: none;" onclick="logout()">Logout</a>
+        <a href="signin.html" class="mobile-nav-item" id="mobileSignIn">Sign In</a>
+        <a href="signup.html" class="mobile-nav-item" id="mobileSignUp">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="about-hero">
+    <div class="container">
+      <div class="about-hero-content">
+        <h1>About <span class="highlight">Raket.H Clone</span></h1>
+        <p>Revolutionizing voice technology with cutting-edge AI solutions</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-story">
+    <div class="container">
+      <div class="story-grid">
+        <div class="story-content">
+          <h2>Our Story</h2>
+          <p>Founded with a vision to democratize voice technology, Raket.H Clone emerged from the need to make professional voice generation accessible to everyone. Our journey began when we realized that high-quality voice content was limited to those with expensive equipment and professional studios.</p>
+          <p>Today, we're proud to offer an AI-powered platform that enables creators, businesses, and individuals to generate natural-sounding voices in over 120 languages, breaking down barriers and opening up new possibilities for content creation.</p>
+          <div class="story-stats">
+            <div class="stat">
+              <h3>120+</h3>
+              <p>Languages Supported</p>
+            </div>
+            <div class="stat">
+              <h3>50K+</h3>
+              <p>Happy Users</p>
+            </div>
+            <div class="stat">
+              <h3>1M+</h3>
+              <p>Voices Generated</p>
+            </div>
+          </div>
+        </div>
+        <div class="story-image">
+          <img src="assests/about.png" alt="About Us" style="width: 100%; height: auto; border-radius: 12px;">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-mission">
+    <div class="container">
+      <div class="mission-content">
+        <h2>Our Mission</h2>
+        <p>To empower creators worldwide with advanced AI voice technology that breaks language barriers and enables authentic, engaging content creation for everyone.</p>
+      </div>
+      <div class="mission-grid">
+        <div class="mission-card">
+          <div class="mission-icon">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+            </svg>
+          </div>
+          <h3>Quality First</h3>
+          <p>We prioritize delivering the highest quality voice generation with natural-sounding results that exceed expectations.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-icon">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <h3>User-Centric</h3>
+          <p>Every feature we build is designed with our users in mind, ensuring an intuitive and seamless experience.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-icon">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </div>
+          <h3>Innovation</h3>
+          <p>We continuously push the boundaries of AI technology to bring you the most advanced voice generation capabilities.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <section class="about-values">
+    <div class="container">
+      <h2>Our Values</h2>
+      <div class="values-grid">
+        <div class="value-item">
+          <h3>🚀 Innovation</h3>
+          <p>We constantly push boundaries to deliver cutting-edge voice technology solutions.</p>
+        </div>
+        <div class="value-item">
+          <h3>🤝 Collaboration</h3>
+          <p>We believe in the power of teamwork and building strong partnerships with our users.</p>
+        </div>
+        <div class="value-item">
+          <h3>🎯 Excellence</h3>
+          <p>We strive for perfection in everything we do, from product quality to customer service.</p>
+        </div>
+        <div class="value-item">
+          <h3>🌍 Accessibility</h3>
+          <p>We're committed to making advanced voice technology accessible to everyone, everywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-cta">
+    <div class="container">
+      <div class="cta-content">
+        <h2>Ready to Transform Your Voice Content?</h2>
+        <p>Join thousands of creators who trust Raket.H Clone for their voice generation needs.</p>
+        <div class="cta-buttons">
+          <a href="signup.html" class="btn-primary">Get Started Today</a>
+          <a href="contact.html" class="btn-secondary">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 RaketH Clone. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Check if user is logged in
+    const user = localStorage.getItem('voiceAppUser');
+    if (user) {
+      const userData = JSON.parse(user);
+      document.getElementById('authButtons').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('userName').textContent = `Welcome, ${userData.name || userData.email}!`;
+      document.getElementById('dashboardNav').style.display = 'block';
+      
+      // Mobile menu
+      document.getElementById('mobileDashboard').style.display = 'block';
+      document.getElementById('mobileLogout').style.display = 'block';
+      document.getElementById('mobileSignIn').style.display = 'none';
+      document.getElementById('mobileSignUp').style.display = 'none';
+    }
+    
+    function logout() {
+      localStorage.removeItem('voiceAppUser');
+      location.reload();
+    }
+    
+    function toggleMobileMenu() {
+      const mobileNav = document.getElementById('mobileNav');
+      mobileNav.classList.toggle('show');
+    }
+  </script>
+</body>
+</html>

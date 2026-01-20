@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="png" href="assests/logo.png">
+  <title>Pricing - Raket.H Clone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/website.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:bold;">
+      <img src="assests/logo.png" alt="Logo" style="width:32px;height:auto;">
+      Raket.H <span style="color:#f5751f;">Clone</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="pricing.html" class="active">Pricing</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li id="dashboardNav" style="display: none;"><a href="dashboard.html">Dashboard</a></li>
+      </ul>
+      <div class="nav-auth-buttons" id="authButtons">
+        <a href="signin.html" class="nav-signin">Sign In</a>
+        <a href="signup.html" class="nav-signup">Sign Up</a>
+      </div>
+      <div class="nav-user-info" id="userInfo" style="display: none;">
+        <span id="userName">Welcome!</span>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="mobile-nav" id="mobileNav">
+        <a href="index.html" class="mobile-nav-item">Home</a>
+        <a href="about.html" class="mobile-nav-item">About</a>
+        <a href="services.html" class="mobile-nav-item">Services</a>
+        <a href="pricing.html" class="mobile-nav-item">Pricing</a>
+        <a href="contact.html" class="mobile-nav-item">Contact</a>
+        <a href="dashboard.html" class="mobile-nav-item" id="mobileDashboard" style="display: none;">Dashboard</a>
+        <a href="#" class="mobile-nav-item" id="mobileLogout" style="display: none;" onclick="logout()">Logout</a>
+        <a href="signin.html" class="mobile-nav-item" id="mobileSignIn">Sign In</a>
+        <a href="signup.html" class="mobile-nav-item" id="mobileSignUp">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <div class="container">
+      <h1>Simple & Transparent Pricing</h1>
+      <p>Choose the perfect plan for your voice generation needs</p>
+    </div>
+  </section>
+
+  <section class="blog-section">
+    <div class="container">
+      <div class="blog-grid">
+        <article class="blog-card">
+          <div class="blog-date">LOW PLAN</div>
+          <h3>$9/month</h3>
+          <p>Perfect for individuals and small projects</p>
+          <ul style="text-align: left; margin: 20px 0; list-style: none; padding: 0;">
+            <li style="margin: 10px 0;">✓ 100 tokens/month</li>
+            <li style="margin: 10px 0;">✓ 5 AI voices</li>
+            <li style="margin: 10px 0;">✓ Basic support</li>
+            <li style="margin: 10px 0;">✓ MP3 downloads</li>
+          </ul>
+          <a href="https://wa.me/+923025295337?text=Hi, I want the Low Plan subscription." class="read-more" target="_blank">Get Subscription →</a>
+        </article>
+
+        <article class="blog-card">
+          <div class="blog-date">MIDDLE PLAN</div>
+          <h3>$29/month</h3>
+          <p>Best for content creators and businesses</p>
+          <ul style="text-align: left; margin: 20px 0; list-style: none; padding: 0;">
+            <li style="margin: 10px 0;">✓ 500 tokens/month</li>
+            <li style="margin: 10px 0;">✓ 20+ AI voices</li>
+            <li style="margin: 10px 0;">✓ Priority support</li>
+            <li style="margin: 10px 0;">✓ Commercial license</li>
+            <li style="margin: 10px 0;">✓ Voice cloning</li>
+          </ul>
+          <a href="https://wa.me/+923025295337?text=Hi, I want the Middle Plan subscription." class="read-more" target="_blank">Get Subscription →</a>
+        </article>
+
+        <article class="blog-card">
+          <div class="blog-date">HIGH PLAN</div>
+          <h3>$99/month</h3>
+          <p>For large teams and high-volume needs</p>
+          <ul style="text-align: left; margin: 20px 0; list-style: none; padding: 0;">
+            <li style="margin: 10px 0;">✓ 1000 tokens/month</li>
+            <li style="margin: 10px 0;">✓ All AI voices</li>
+            <li style="margin: 10px 0;">✓ 24/7 support</li>
+            <li style="margin: 10px 0;">✓ API access</li>
+            <li style="margin: 10px 0;">✓ Custom voices</li>
+            <li style="margin: 10px 0;">✓ Team collaboration</li>
+          </ul>
+          <a href="https://wa.me/+923025295337?text=Hi, I want the High Plan subscription." class="read-more" target="_blank">Get Subscription →</a>
+        </article>
+
+        <article class="blog-card">
+          <div class="blog-date">ENTERPRISE PLAN</div>
+          <h3>$199/month</h3>
+          <p>Ultimate solution for large enterprises</p>
+          <ul style="text-align: left; margin: 20px 0; list-style: none; padding: 0;">
+            <li style="margin: 10px 0;">✓ Unlimited tokens</li>
+            <li style="margin: 10px 0;">✓ All premium features</li>
+            <li style="margin: 10px 0;">✓ Dedicated support</li>
+            <li style="margin: 10px 0;">✓ White-label solution</li>
+            <li style="margin: 10px 0;">✓ Custom integrations</li>
+            <li style="margin: 10px 0;">✓ SLA guarantee</li>
+          </ul>
+          <a href="https://wa.me/+923025295337?text=Hi, I want the Enterprise Plan subscription." class="read-more" target="_blank">Get Subscription →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 RaketH Clone. All rights reserved.</p>
+    </div>
+  </footer>
+  <script>
+    // Check if user is logged in
+    const user = localStorage.getItem('voiceAppUser');
+    if (user) {
+      const userData = JSON.parse(user);
+      document.getElementById('authButtons').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('userName').textContent = `Welcome, ${userData.name || userData.email}!`;
+      document.getElementById('dashboardNav').style.display = 'block';
+      
+      // Mobile menu
+      document.getElementById('mobileDashboard').style.display = 'block';
+      document.getElementById('mobileLogout').style.display = 'block';
+      document.getElementById('mobileSignIn').style.display = 'none';
+      document.getElementById('mobileSignUp').style.display = 'none';
+    }
+    
+    function logout() {
+      localStorage.removeItem('voiceAppUser');
+      location.reload();
+    }
+    
+    function toggleMobileMenu() {
+      const mobileNav = document.getElementById('mobileNav');
+      mobileNav.classList.toggle('show');
+    }
+  </script>
+</body>
+</html>

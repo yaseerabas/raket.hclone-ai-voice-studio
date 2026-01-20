@@ -1,0 +1,23 @@
+{
+"languages": {
+    "English": "eng_Latn",
+    "Urdu": "hin_Deva",
+    "Spanish": "spa_Latn",
+    "French": "fra_Latn",
+    "German": "deu_Latn",
+    "Arabic": "ara_Arab",
+    "Chinese (Simplified)": "zho_Hans",
+    "Japanese": "jpn_Jpan",
+    "Korean": "kor_Hang",
+    "Russian": "rus_Cyrl",
+    "Portuguese": "por_Latn",
+    "Italian": "ita_Latn",
+    "Dutch": "nld_Latn",
+    "Polish": "pol_Latn",
+    "Turkish": "tur_Latn",
+    "Bengali": "ben_Beng",
+    "Marathi": "mar_Deva",
+    "Tamil": "tam_Taml",
+    "Telugu": "tel_Telu"
+}
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="png" href="assests/logo.png">
+  <title>Services - RaketH Clone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/website.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:bold;">
+      <img src="assests/logo.png" alt="Logo" style="width:32px;height:auto;">
+      Raket.H <span style="color:#f5751f;">Clone</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html" class="active">Services</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li id="dashboardNav" style="display: none;"><a href="dashboard.html">Dashboard</a></li>
+      </ul>
+      <div class="nav-auth-buttons" id="authButtons">
+        <a href="signin.html" class="nav-signin">Sign In</a>
+        <a href="signup.html" class="nav-signup">Sign Up</a>
+      </div>
+      <div class="nav-user-info" id="userInfo" style="display: none;">
+        <span id="userName">Welcome!</span>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="mobile-nav" id="mobileNav">
+        <a href="index.html" class="mobile-nav-item">Home</a>
+        <a href="about.html" class="mobile-nav-item">About</a>
+        <a href="services.html" class="mobile-nav-item">Services</a>
+        <a href="pricing.html" class="mobile-nav-item">Pricing</a>
+        <a href="contact.html" class="mobile-nav-item">Contact</a>
+        <a href="dashboard.html" class="mobile-nav-item" id="mobileDashboard" style="display: none;">Dashboard</a>
+        <a href="#" class="mobile-nav-item" id="mobileLogout" style="display: none;" onclick="logout()">Logout</a>
+        <a href="signin.html" class="mobile-nav-item" id="mobileSignIn">Sign In</a>
+        <a href="signup.html" class="mobile-nav-item" id="mobileSignUp">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <div class="container">
+      <h1>Our Services</h1>
+      <p>Professional AI voice solutions for your business</p>
+    </div>
+  </section>
+
+  <section class="services-section">
+    <div class="container">
+      <div class="services-grid">
+        <div class="service-card">
+          <h3>Text to Speech</h3>
+          <p>Convert any text into natural-sounding speech in multiple languages and voices.</p>
+          <ul>
+            <li>120+ Languages</li>
+            <li>Multiple Voice Options</li>
+            <li>High Quality Audio</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <h3>Voice Cloning</h3>
+          <p>Clone any voice with just a few samples and use it for your projects.</p>
+          <ul>
+            <li>Quick Training</li>
+            <li>Natural Results</li>
+            <li>Custom Voices</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <h3>Audio Translation</h3>
+          <p>Translate your audio content into multiple languages while preserving tone.</p>
+          <ul>
+            <li>Multi-language Support</li>
+            <li>Voice Preservation</li>
+            <li>Fast Processing</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 RaketH Clone. All rights reserved.</p>
+    </div>
+  </footer>
+  <script>
+    // Check if user is logged in
+    const user = localStorage.getItem('voiceAppUser');
+    if (user) {
+      const userData = JSON.parse(user);
+      document.getElementById('authButtons').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('userName').textContent = `Welcome, ${userData.name || userData.email}!`;
+      document.getElementById('dashboardNav').style.display = 'block';
+      
+      // Mobile menu
+      document.getElementById('mobileDashboard').style.display = 'block';
+      document.getElementById('mobileLogout').style.display = 'block';
+      document.getElementById('mobileSignIn').style.display = 'none';
+      document.getElementById('mobileSignUp').style.display = 'none';
+    }
+    
+    function logout() {
+      localStorage.removeItem('voiceAppUser');
+      location.reload();
+    }
+    
+    function toggleMobileMenu() {
+      const mobileNav = document.getElementById('mobileNav');
+      mobileNav.classList.toggle('show');
+    }
+  </script>
+</body>
+</html>
