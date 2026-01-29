@@ -56,14 +56,19 @@ def generate_tts():
         language = data.get('language', 'en')  # Tone/language for TTS
         source_language = data.get('source_language')  # Optional
         target_language = data.get('target_language')  # Optional
-        voice_model = data.get('voice_model', 'male')  # Voice type or speaker_id
+        voice_model = data.get('voice_model', 'default_male_01')  # Voice type or speaker_id
         
         # Check if voice_model is a speaker_id (from cloned voice) or default voice type
-        # Speaker IDs are in format "user-XXX-YYYY"
-        if voice_model.startswith('user-'):
-            speaker_id = voice_model  # Use the cloned voice speaker_id
+        # Default voices: "default_male_01", "default_female_01"
+        # Cloned voice IDs are in format "user-XXX-YYYY"
+        if voice_model.startswith('user-') or voice_model.startswith('default_'):
+            speaker_id = voice_model  # Use the cloned voice or default speaker_id
         else:
-            speaker_id = f"user_{user_id}"  # Default speaker_id for built-in voices
+            # Fallback for legacy voice_model values like 'male' or 'female'
+            if voice_model.lower() == 'female':
+                speaker_id = 'default_female_01'
+            else:
+                speaker_id = 'default_male_01'
         
         # Prepare TTS API payload for the new endpoint
         tts_payload = {
@@ -319,6 +324,106 @@ def list_voices():
         } for v in voices]
         return jsonify(result), 200
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# -------------------
+# Get All Available Voices (Default + User's Cloned)
+# -------------------
+@tts_bp.route('/available-voices', methods=['GET'])
+@jwt_required()
+def get_available_voices():
+    """
+    Fetches all available voices for the current user from external API.
+    - Default voices (default_male_01, default_female_01) are visible to all users if available in API
+    - User's personal cloned voices are only visible to themselves
+    """
+    try:
+        identity = get_jwt_identity()
+        user_id = int(identity)
+        
+        available_voices = []
+        
+        # Get user's cloned voices from local DB for matching
+        user_clones = ClonedVoice.query.filter_by(user_id=user_id).all()
+        user_speaker_ids = [c.speaker_id for c in user_clones if c.speaker_id]
+        
+        # Fetch voices from external API
+        try:
+            external_api_url = f"{TTS_BASE_URL}/voice/list"
+            response = requests.get(external_api_url, timeout=30)
+            
+            if response.ok:
+                external_data = response.json()
+                print(f"External API response: {external_data}")  # Debug log
+                
+                # Handle response format: {"voices": [...]}
+                voice_list = external_data.get('voices', []) if isinstance(external_data, dict) else external_data
+                
+                # Process each voice from external API
+                for voice in voice_list:
+                    voice_user_id = voice.get('user_id', '')
+                    is_available = voice.get('available', False)
+                    
+                    # Skip unavailable voices
+                    if not is_available:
+                        continue
+                    
+                    # Check if it's a default voice
+                    if voice_user_id in ['default_male_01', 'default_female_01']:
+                        # Determine gender from user_id
+                        gender = 'female' if 'female' in voice_user_id else 'male'
+                        voice_name = 'Default Female Voice' if gender == 'female' else 'Default Male Voice'
+                        
+                        available_voices.append({
+                            "user_id": voice_user_id,
+                            "voice_name": voice_name,
+                            "path": voice.get('path', ''),
+                            "is_default": True,
+                            "available": True,
+                            "gender": gender
+                        })
+                    
+                    # Check if the voice belongs to the current user (cloned voice)
+                    elif voice_user_id in user_speaker_ids:
+                        # Find the matching local clone for additional info
+                        matching_clone = next((c for c in user_clones if c.speaker_id == voice_user_id), None)
+                        
+                        available_voices.append({
+                            "user_id": voice_user_id,
+                            "voice_name": matching_clone.voice_name if matching_clone else voice_user_id,
+                            "path": voice.get('path', ''),
+                            "is_default": False,
+                            "available": True,
+                            "clone_id": matching_clone.id if matching_clone else None
+                        })
+                        
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching external voices: {str(e)}")  # Debug log
+            # If external API fails, only return user's local cloned voices
+        
+        # Also add user's local cloned voices that might not be in external API yet
+        existing_user_ids = [v['user_id'] for v in available_voices]
+        
+        for clone in user_clones:
+            if clone.speaker_id and clone.speaker_id not in existing_user_ids:
+                available_voices.append({
+                    "user_id": clone.speaker_id,
+                    "voice_name": clone.voice_name,
+                    "path": clone.voice_file_path,
+                    "is_default": False,
+                    "available": True,
+                    "clone_id": clone.id
+                })
+        
+        return jsonify({
+            "voices": available_voices,
+            "total": len(available_voices)
+        }), 200
+        
+    except Exception as e:
+        print(f"Get available voices error: {str(e)}")  # Debug log
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 # -------------------

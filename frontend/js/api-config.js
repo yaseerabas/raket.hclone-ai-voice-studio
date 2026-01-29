@@ -18,6 +18,7 @@ const API_CONFIG = {
             GENERATE: '/voice/generate',
             CLONE_VOICE: '/voice/clone-voice',
             LIST_VOICES: '/voice/voices',
+            AVAILABLE_VOICES: '/voice/available-voices',
             DOWNLOAD_AUDIO: '/voice/download'
         },
         TRANSLATION: {

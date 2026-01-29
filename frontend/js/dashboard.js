@@ -255,6 +255,8 @@ function setupDropdowns() {
       const value = option.getAttribute('data-value');
       const icon = option.querySelector('svg');
       
+      console.log('Dropdown option selected:', { text, value, dropdownType: dropdown.getAttribute('data-dropdown') });  // Debug log
+      
       // Update selected display
       const span = selected.querySelector('span');
       span.innerHTML = '';
@@ -266,7 +268,7 @@ function setupDropdowns() {
       
       span.appendChild(document.createTextNode(' ' + text));
       
-      // Store selected value
+      // Store selected value (this is important for voice-clone dropdown - stores the user_id/speaker_id)
       dropdown.setAttribute('data-selected', value || text);
       
       // Hide dropdown
@@ -447,12 +449,21 @@ async function loadUserDashboard() {
 // Function to load voice clones from API
 async function loadVoiceClones() {
   try {
-    // Load clones from API
-    const response = await API.request('/voice/voices', {
+    // Load all available voices (default + user's clones) from new endpoint
+    const response = await API.request('/voice/available-voices', {
       method: 'GET',
       headers: API.getAuthHeaders()
     });
-    const clones = response || [];
+    
+    console.log('Available voices API response:', response);  // Debug log
+    
+    const voices = response.voices || [];
+    
+    // Separate default and custom voices
+    const defaultVoices = voices.filter(v => v.is_default);
+    const customVoices = voices.filter(v => !v.is_default);
+    
+    console.log(`Loaded ${voices.length} available voices (${defaultVoices.length} default, ${customVoices.length} custom)`);
     
     const voiceCloneDropdown = document.querySelector('[data-dropdown="voice-clone"] .dropdown-options');
     
@@ -466,21 +477,62 @@ async function loadVoiceClones() {
       searchDiv.innerHTML = '<input type="text" placeholder="Search voice clones..." class="clone-search" />';
       voiceCloneDropdown.appendChild(searchDiv);
       
-      // Add user's API clones to dropdown
-      clones.forEach(clone => {
-        const option = document.createElement('div');
-        option.className = 'dropdown-option';
-        // Use speaker_id if available, otherwise fall back to clone id
-        option.setAttribute('data-value', clone.speaker_id || clone.id);
-        option.innerHTML = `
-          <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-          </svg>
-          ${clone.voice_name}
-        `;
-        voiceCloneDropdown.appendChild(option);
-      });
+      // Add default voices section header
+      if (defaultVoices.length > 0) {
+        const defaultHeader = document.createElement('div');
+        defaultHeader.className = 'dropdown-section-header';
+        defaultHeader.style.cssText = 'padding: 8px 12px; color: #4ecca3; font-size: 12px; font-weight: bold; border-bottom: 1px solid #333;';
+        defaultHeader.textContent = '📢 Default Voices';
+        voiceCloneDropdown.appendChild(defaultHeader);
+        
+        // Add default voice options
+        defaultVoices.forEach(voice => {
+          const option = document.createElement('div');
+          option.className = 'dropdown-option';
+          option.setAttribute('data-value', voice.user_id);
+          option.innerHTML = `
+            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="${voice.gender === 'male' ? '#4dabf7' : '#f783ac'}" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            </svg>
+            ${voice.voice_name}
+            <span style="font-size: 10px; color: #888; margin-left: 8px;">(Default)</span>
+          `;
+          voiceCloneDropdown.appendChild(option);
+        });
+      }
+      
+      // Add custom voices section header if user has cloned voices
+      if (customVoices.length > 0) {
+        const customHeader = document.createElement('div');
+        customHeader.className = 'dropdown-section-header';
+        customHeader.style.cssText = 'padding: 8px 12px; color: #ffa500; font-size: 12px; font-weight: bold; border-bottom: 1px solid #333; margin-top: 8px;';
+        customHeader.textContent = '🎤 My Cloned Voices';
+        voiceCloneDropdown.appendChild(customHeader);
+        
+        // Add user's custom voice clones
+        customVoices.forEach(voice => {
+          const option = document.createElement('div');
+          option.className = 'dropdown-option';
+          option.setAttribute('data-value', voice.user_id);
+          option.innerHTML = `
+            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            </svg>
+            ${voice.voice_name}
+          `;
+          voiceCloneDropdown.appendChild(option);
+        });
+      }
+      
+      // If no voices at all, show a message
+      if (voices.length === 0) {
+        const noVoicesMsg = document.createElement('div');
+        noVoicesMsg.style.cssText = 'padding: 12px; color: #888; text-align: center; font-size: 13px;';
+        noVoicesMsg.textContent = 'No voices available';
+        voiceCloneDropdown.appendChild(noVoicesMsg);
+      }
       
       // Add search functionality
       const searchInput = voiceCloneDropdown.querySelector('.clone-search');
@@ -507,6 +559,8 @@ async function loadVoiceClones() {
       
       // Re-setup dropdown functionality for new options
       setupDropdowns();
+    } else {
+      console.error('Voice clone dropdown not found in DOM');
     }
     
   } catch (error) {
@@ -518,38 +572,26 @@ async function loadVoiceClones() {
 
 // Fallback function for local voice clones
 function loadVoiceClonesLocal() {
-  const clones = JSON.parse(localStorage.getItem('voiceClones') || '[]');
+  console.log('Loading voice clones from local storage (fallback)');
   const voiceCloneDropdown = document.querySelector('[data-dropdown="voice-clone"] .dropdown-options');
   
   if (voiceCloneDropdown) {
-    // Clear existing dynamic options (keep only default ones)
-    const defaultOptions = voiceCloneDropdown.querySelectorAll('.dropdown-option');
-    const defaultCloneNames = ['naveed', 'shahzad', 'naveed-m', 'naveed-i', 'mrc', 'm-r'];
+    // Clear all options and show a message
+    voiceCloneDropdown.innerHTML = '';
     
-    // Remove non-default options
-    defaultOptions.forEach(option => {
-      const value = option.getAttribute('data-value');
-      if (!defaultCloneNames.includes(value)) {
-        option.remove();
-      }
-    });
+    // Add search bar
+    const searchDiv = document.createElement('div');
+    searchDiv.className = 'dropdown-search';
+    searchDiv.innerHTML = '<input type="text" placeholder="Search voice clones..." class="clone-search" />';
+    voiceCloneDropdown.appendChild(searchDiv);
     
-    // Add saved clones to dropdown
-    clones.forEach(clone => {
-      const option = document.createElement('div');
-      option.className = 'dropdown-option';
-      option.setAttribute('data-value', clone.name.toLowerCase().replace(/\s+/g, '-'));
-      option.innerHTML = `
-        <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-        </svg>
-        ${clone.name} (${clone.gender})
-      `;
-      voiceCloneDropdown.appendChild(option);
-    });
+    // Show error message
+    const errorMsg = document.createElement('div');
+    errorMsg.style.cssText = 'padding: 12px; color: #ff6b6b; text-align: center; font-size: 13px;';
+    errorMsg.textContent = 'Failed to load voices. Please refresh the page.';
+    voiceCloneDropdown.appendChild(errorMsg);
     
-    // Re-setup dropdown functionality for new options
+    // Re-setup dropdown functionality
     setupDropdowns();
   }
 }
@@ -602,7 +644,14 @@ async function generateVoice(event) {
   const targetLanguage = document.querySelector('[data-dropdown="target-language"]').getAttribute('data-selected');
   const voiceModel = getSelectedVoiceModel();
   
-  console.log('Generating voice with:', { text, tone, sourceLanguage, targetLanguage, voiceModel });
+  console.log('Generating voice with:', { 
+    text: text.substring(0, 50) + '...', 
+    tone, 
+    sourceLanguage, 
+    targetLanguage, 
+    voiceModel,
+    speaker_id: voiceModel  // This is the speaker_id that will be sent to backend
+  });
   
   // Show loading state
   const generateBtn = document.querySelector('.btn-primary');
@@ -751,28 +800,24 @@ async function generateVoice(event) {
 
 // Helper function to get selected voice model
 function getSelectedVoiceModel() {
-  const maleVoiceEl = document.querySelector('[data-dropdown="male-voice"]');
-  const femaleVoiceEl = document.querySelector('[data-dropdown="female-voice"]');
-  const kidsVoiceEl = document.querySelector('[data-dropdown="kids-voice"]');
   const voiceCloneEl = document.querySelector('[data-dropdown="voice-clone"]');
   
-  // Get values only if elements exist
-  const maleVoice = maleVoiceEl ? maleVoiceEl.getAttribute('data-selected') : null;
-  const femaleVoice = femaleVoiceEl ? femaleVoiceEl.getAttribute('data-selected') : null;
-  const kidsVoice = kidsVoiceEl ? kidsVoiceEl.getAttribute('data-selected') : null;
+  // Get voice clone value if selected
   const voiceClone = voiceCloneEl ? voiceCloneEl.getAttribute('data-selected') : null;
   
-  // Priority: voice clone > specific voice type > default
-  if (voiceClone && voiceClone !== 'Select Voice Clone') {
-    return voiceClone;
-  } else if (maleVoice && maleVoice !== 'Select Male Voice') {
-    return 'male';
-  } else if (femaleVoice && femaleVoice !== 'Select Female Voice') {
-    return 'female';
-  } else if (kidsVoice && kidsVoice !== 'Select Kids Voice') {
-    return 'kids';
+  console.log('Selected voice clone value:', voiceClone);  // Debug log
+  
+  // Check if a voice clone is selected (should be user_id like "default_male_01" or "user-123-2026")
+  if (voiceClone && 
+      voiceClone !== 'Select Voice Clone' && 
+      voiceClone !== '' && 
+      voiceClone !== null &&
+      voiceClone !== 'undefined') {
+    return voiceClone;  // Return the speaker_id directly
   }
-  return 'male'; // default
+  
+  // Default to male voice if nothing selected
+  return 'default_male_01';
 }
 
 // Generate New Voice functionality
