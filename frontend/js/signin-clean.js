@@ -15,6 +15,18 @@ document.addEventListener("DOMContentLoaded", function() {
     // Clear previous errors
     formErr.textContent = "";
     
+    // Clear ALL previous user data before any login
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_type');
+    localStorage.removeItem('voiceAppUser');
+    localStorage.removeItem('current_user');
+    localStorage.removeItem('totalCharactersUsed');
+    localStorage.removeItem('totalCharactersLimit');
+    localStorage.removeItem('charactersRemaining');
+    localStorage.removeItem('userProfilePic');
+    sessionStorage.removeItem('current_audio_id');
+    sessionStorage.removeItem('current_audio_url');
+    
     // Check if admin credentials
     if (email === 'admin@raketh.com' && password === 'admin123') {
       sessionStorage.setItem('adminAuth', 'true');
@@ -30,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     if (user) {
       localStorage.setItem('voiceAppUser', JSON.stringify(user));
-      window.location.replace("index.html");
+      window.location.replace("dashboard.html");
     } else {
       formErr.textContent = "Incorrect email or password.";
       formErr.style.color = "red";

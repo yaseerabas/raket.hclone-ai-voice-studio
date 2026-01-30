@@ -28,10 +28,12 @@ function handleFileUpload(input) {
       return;
     }
     
-    // Check file type
-    const allowedTypes = ['audio/mp3', 'audio/wav', 'audio/x-m4a', 'audio/mp4'];
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a)$/i)) {
-      alert('Please upload MP3, WAV, or M4A files only!');
+    // Check file type - support wav, mp3, flac, ogg, m4a
+    const allowedTypes = ['audio/mp3', 'audio/wav', 'audio/x-m4a', 'audio/mp4', 'audio/flac', 'audio/ogg', 'audio/x-wav', 'audio/mpeg'];
+    const allowedExtensions = /\.(mp3|wav|m4a|flac|ogg)$/i;
+    
+    if (!allowedTypes.includes(file.type) && !file.name.match(allowedExtensions)) {
+      alert('Please upload MP3, WAV, M4A, FLAC, or OGG files only!');
       input.value = '';
       fileName.textContent = '';
       return;
@@ -50,12 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     
     const cloneName = document.getElementById('cloneName').value;
-    const gender = document.querySelector('input[name="gender"]:checked')?.value;
-    const language = document.getElementById('cloneLanguage').value;
     const voiceFile = document.getElementById('voiceFile').files[0];
     
-    if (!cloneName || !gender || !language || !voiceFile) {
-      alert('Please fill all required fields!');
+    if (!cloneName || !voiceFile) {
+      alert('Please provide a clone name and upload a voice file!');
       return;
     }
     
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     submitBtn.disabled = true;
     
     try {
-      // Create FormData for file upload
+      // Create FormData for file upload - only send voice_file and voice_name
       const formData = new FormData();
       formData.append('voice_file', voiceFile);
       formData.append('voice_name', cloneName);
@@ -74,13 +74,16 @@ document.addEventListener('DOMContentLoaded', function() {
       // API call to clone voice
       const response = await API.cloneVoice(formData);
       
-      // Create new clone card
-      createCloneCard(cloneName, gender, language, response.clone_id);
+      // Create new clone card with response data
+      createCloneCard(cloneName, response.speaker_id, response.voice_id);
       
       // Close modal
       closeCreateCloneModal();
       
       alert(`Voice clone "${cloneName}" created successfully!`);
+      
+      // Reload the clones list to refresh from API
+      loadExistingClones();
       
     } catch (error) {
       console.error('Clone creation error:', error);
@@ -94,12 +97,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Function to create new clone card with API integration
-function createCloneCard(name, gender, language, cloneId = null) {
+function createCloneCard(name, speakerId = null, cloneId = null) {
   const clonesGrid = document.querySelector('.clones-grid');
   
   const cloneCard = document.createElement('div');
   cloneCard.className = 'clone-card';
-  cloneCard.setAttribute('data-clone-id', cloneId || name.toLowerCase().replace(/\s+/g, '-'));
+  cloneCard.setAttribute('data-clone-id', cloneId || speakerId || name.toLowerCase().replace(/\s+/g, '-'));
   cloneCard.innerHTML = `
     <div class="clone-header">
       <div class="clone-icon">
@@ -109,21 +112,32 @@ function createCloneCard(name, gender, language, cloneId = null) {
         </svg>
       </div>
       <h3 class="clone-name">${name}</h3>
-      <button class="delete-btn" onclick="deleteClone('${name}', '${cloneId}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3,6 5,6 21,6"></polyline>
-          <path d="M19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"></path>
-        </svg>
-      </button>
+      <div class="clone-actions">
+        ${cloneId ? `
+          <button class="download-btn" onclick="downloadClone('${cloneId}', '${name}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+          <button class="delete-btn" onclick="deleteClone('${name}', '${cloneId}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path d="M19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"></path>
+            </svg>
+          </button>
+        ` : ''}
+      </div>
     </div>
     <div class="clone-details">
       <div class="clone-info">
-        <span class="info-label">Gender</span>
-        <span class="info-value">${gender}</span>
+        <span class="info-label">Voice ID</span>
+        <span class="info-value">${speakerId || 'Pending...'}</span>
       </div>
       <div class="clone-info">
-        <span class="info-label">Language</span>
-        <span class="info-value">${getLanguageName(language)}</span>
+        <span class="info-label">Status</span>
+        <span class="info-value">✓ Active</span>
       </div>
       <div class="clone-feature">
         <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
@@ -135,9 +149,6 @@ function createCloneCard(name, gender, language, cloneId = null) {
   `;
   
   clonesGrid.appendChild(cloneCard);
-  
-  // Update dashboard dropdown
-  updateDashboardDropdown(name, gender, cloneId);
 }
 
 // Function to update dashboard dropdown with new clone
@@ -303,19 +314,8 @@ function openProfileModal() {
 // Initialize page on load
 document.addEventListener('DOMContentLoaded', function() {
   updateProfileUI();
-  loadSavedClones();
-  
-  // Add hover effects to clone cards
-  const cloneCards = document.querySelectorAll('.clone-card');
-  cloneCards.forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-5px)';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-      this.style.transform = 'translateY(0)';
-    });
-  });
+  // Only call loadExistingClones - it's the primary function for loading voices
+  loadExistingClones();
 });
 
 // Function to load saved clones from API and localStorage

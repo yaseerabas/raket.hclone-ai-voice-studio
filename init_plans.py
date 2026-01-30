@@ -21,10 +21,10 @@ def create_default_plans():
             
             # Default plans data
             default_plans = [
-                {"name": "Basic", "character_limit": 10000},
-                {"name": "Pro", "character_limit": 50000},
-                {"name": "Premium", "character_limit": 100000},
-                {"name": "Enterprise", "character_limit": 500000}
+                {"name": "Basic", "character_limit": 1000000},
+                {"name": "Pro", "character_limit": 3000000},
+                {"name": "Premium", "character_limit": 5000000},
+                {"name": "Enterprise", "character_limit": 10000000}
             ]
             
             created_plans = []

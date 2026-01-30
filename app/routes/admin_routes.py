@@ -48,10 +48,10 @@ def assign_plan():
     try:
         # First create default plans if they don't exist
         plans_data = [
-            {"name": "Basic", "character_limit": 10000},
-            {"name": "Pro", "character_limit": 50000},
-            {"name": "Premium", "character_limit": 100000},
-            {"name": "Enterprise", "character_limit": 500000}
+            {"name": "Basic", "character_limit": 1000000, "price": 1499},
+            {"name": "Pro", "character_limit": 3000000, "price": 3499},
+            {"name": "Premium", "character_limit": 5000000, "price": 5999},
+            {"name": "Enterprise", "character_limit": 10000000, "price": 7999}
         ]
         
         for plan_data in plans_data:

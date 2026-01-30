@@ -47,17 +47,21 @@
     <div class="main-content">
       <div class="status-card">
         <div class="status-header">
-          <div class="project-name">MyVoiceAI</div>
-          <div class="status-badge">Active</div>
+          <div class="project-name">MyVoiceAI <span id="planInfo" style="font-size: 12px; color: #4ecca3; margin-left: 8px;"></span></div>
+          <div class="status-badge" id="statusBadge">Loading...</div>
         </div>
         <div class="token-info">
           <div class="token-stat">
             <div class="token-number" id="usedChars">0</div>
-            <div class="token-label">Character Used</div>
+            <div class="token-label">Characters Used</div>
           </div>
           <div class="token-stat">
-            <div class="token-number" id="totalChars">60000</div>
-            <div class="token-label">Total Character</div>
+            <div class="token-number" id="remainingChars">0</div>
+            <div class="token-label">Characters Remaining</div>
+          </div>
+          <div class="token-stat">
+            <div class="token-number" id="totalChars">0</div>
+            <div class="token-label">Total Characters</div>
           </div>
         </div>
         <div class="progress-container">
@@ -3274,47 +3278,11 @@
                 <div class="dropdown-search">
                   <input type="text" placeholder="Search voice clones..." class="clone-search" />
                 </div>
-                <div class="dropdown-option" data-value="naveed">
-                  <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <div class="voice-loading-state" style="padding: 20px; text-align: center; color: #888;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+                    <circle cx="12" cy="12" r="10" stroke="#4ecca3" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
                   </svg>
-                  naveed (male)
-                </div>
-                <div class="dropdown-option" data-value="shahzad">
-                  <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  </svg>
-                  SHAHZAD (male)
-                </div>
-                <div class="dropdown-option" data-value="naveed-m">
-                  <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  </svg>
-                  Naveed M (male)
-                </div>
-                <div class="dropdown-option" data-value="naveed-i">
-                  <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  </svg>
-                  NAVEED I (male)
-                </div>
-                <div class="dropdown-option" data-value="mrc">
-                  <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  </svg>
-                  MRC (female)
-                </div>
-                <div class="dropdown-option" data-value="m-r">
-                  <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  </svg>
-                  m r (female)
+                  <p style="margin-top: 8px; font-size: 13px;">Loading voices...</p>
                 </div>
               </div>
             </div>

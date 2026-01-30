@@ -59,8 +59,11 @@
 
     <div class="clones-grid">
       <!-- Voice clones will be loaded dynamically from the API -->
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #999;">
-        <p>Loading your voice clones...</p>
+      <div class="voice-loading-state" style="grid-column: 1/-1; text-align: center; padding: 60px 40px; color: #888;">
+        <svg width="48" height="48" viewBox="0 0 24 24" style="animation: spin 1s linear infinite; margin-bottom: 16px;">
+          <circle cx="12" cy="12" r="10" stroke="#4ecca3" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
+        </svg>
+        <p style="font-size: 16px; margin: 0;">Loading your voice library...</p>
       </div>
     </div>
   </div>
@@ -81,48 +84,8 @@
       <form id="createCloneForm">
         <div class="form-group">
           <label class="form-label">Clone Name *</label>
-          <input type="text" id="cloneName" class="form-input" placeholder="Enter clone name" required>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Gender *</label>
-          <div class="radio-group">
-            <label class="radio-item">
-              <input type="radio" name="gender" value="male" required>
-              <span>Male</span>
-            </label>
-            <label class="radio-item">
-              <input type="radio" name="gender" value="female" required>
-              <span>Female</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Language *</label>
-          <select id="cloneLanguage" class="form-select" required>
-            <option value="">Select Language</option>
-            <option value="en-us">English (US)</option>
-            <option value="en-uk">English (UK)</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="it">Italian</option>
-            <option value="pt">Portuguese</option>
-            <option value="ru">Russian</option>
-            <option value="zh">Chinese (Mandarin)</option>
-            <option value="ja">Japanese</option>
-            <option value="ko">Korean</option>
-            <option value="ar">Arabic</option>
-            <option value="hi">Hindi</option>
-            <option value="ur">Urdu</option>
-            <option value="tr">Turkish</option>
-            <option value="nl">Dutch</option>
-            <option value="sv">Swedish</option>
-            <option value="no">Norwegian</option>
-            <option value="da">Danish</option>
-            <option value="fi">Finnish</option>
-          </select>
+          <input type="text" id="cloneName" class="form-input" placeholder="Enter a name for your voice clone" required>
+          <p class="form-hint" style="color: #888; font-size: 12px; margin-top: 4px;">Give your voice clone a recognizable name</p>
         </div>
         
         <div class="form-group">
@@ -134,10 +97,11 @@
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             <p>Click to upload voice sample</p>
-            <p class="file-info">Maximum file size: 25MB | Supported formats: MP3, WAV, M4A</p>
+            <p class="file-info">Maximum file size: 25MB | Supported formats: MP3, WAV, M4A, FLAC, OGG</p>
             <p id="fileName" class="file-name"></p>
           </div>
-          <input type="file" id="voiceFile" accept=".mp3,.wav,.m4a" style="display: none;" onchange="handleFileUpload(this)">
+          <input type="file" id="voiceFile" accept=".mp3,.wav,.m4a,.flac,.ogg" style="display: none;" onchange="handleFileUpload(this)">
+          <p class="form-hint" style="color: #888; font-size: 12px; margin-top: 4px;">Upload a clear audio sample of the voice you want to clone (5-30 seconds recommended)</p>
         </div>
         
         <div class="modal-buttons">

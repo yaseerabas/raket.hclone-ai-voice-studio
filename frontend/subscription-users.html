@@ -28,9 +28,6 @@
                         <a class="nav-link" href="admin-dashboard.html">
                             <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                         </a>
-                        <a class="nav-link" href="add-subscription.html">
-                            <i class="fas fa-plus-circle me-2"></i> Add Subscription
-                        </a>
                         <a class="nav-link active" href="subscription-users.html">
                             <i class="fas fa-users me-2"></i> Subscription Users
                         </a>
@@ -47,11 +44,8 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h2><i class="fas fa-users me-2"></i> Subscription Users</h2>
-                            <p class="mb-0">Manage all subscription users</p>
+                            <p class="mb-0">Manage all subscription users and assign plans</p>
                         </div>
-                        <a href="add-subscription.html" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Add New
-                        </a>
                     </div>
                 </div>
                 
@@ -70,10 +64,10 @@
                     <div class="col-md-3">
                         <select class="form-select search-box" id="planFilter">
                             <option value="">All Plans</option>
-                            <option value="Basic">Basic Plan</option>
-                            <option value="Pro">Pro Plan</option>
-                            <option value="Premium">Premium Plan</option>
-                            <option value="Enterprise">Enterprise Plan</option>
+                            <option value="Basic">Basic (RS 1,499 - 1M chars)</option>
+                            <option value="Pro">Pro (RS 3,499 - 3M chars)</option>
+                            <option value="Premium">Premium (RS 5,999 - 5M chars)</option>
+                            <option value="Enterprise">Enterprise (RS 7,999 - 10M chars)</option>
                         </select>
                     </div>
                 </div>
@@ -86,7 +80,7 @@
                                 <tr>
                                     <th>User Email</th>
                                     <th>Plan Type</th>
-                                    <th>Tokens Left</th>
+                                    <th>Characters Left</th>
                                     <th>Start Date</th>
                                     <th>Expiry Date</th>
                                     <th>Status</th>
@@ -104,10 +98,7 @@
                 <div id="emptyState" class="text-center py-5" style="display: none;">
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No users found</h5>
-                    <p class="text-muted">Add your first subscription user to get started.</p>
-                    <a href="add-subscription.html" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Add Subscription
-                    </a>
+                    <p class="text-muted">Users will appear here when they sign up.</p>
                 </div>
             </div>
         </div>
@@ -144,23 +135,25 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Plan</label>
-                                <select class="form-select" id="editPlan" required>
-                                    <option value="Basic">Basic Plan</option>
-                                    <option value="Pro">Pro Plan</option>
-                                    <option value="Premium">Premium Plan</option>
-                                    <option value="Enterprise">Enterprise Plan</option>
+                                <select class="form-select" id="editPlan" required onchange="updateCharactersFromPlan()">
+                                    <option value="Basic">Basic - RS 1,499 (1M characters)</option>
+                                    <option value="Pro">Pro - RS 3,499 (3M characters)</option>
+                                    <option value="Premium">Premium - RS 5,999 (5M characters)</option>
+                                    <option value="Enterprise">Enterprise - RS 7,999 (10M characters)</option>
                                 </select>
                             </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Tokens</label>
-                                <input type="number" class="form-control" id="editTokens" required>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Characters Allocated</label>
+                                <input type="text" class="form-control" id="editCharactersDisplay" readonly style="background-color: #e9ecef; font-weight: bold; color: #28a745;">
+                                <input type="hidden" id="editTokens">
                             </div>
-                            <div class="col-md-4 mb-3">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Start Date</label>
                                 <input type="date" class="form-control" id="editStartDate" required>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Expiry Date</label>
                                 <input type="date" class="form-control" id="editExpiryDate" required>
                             </div>
@@ -332,6 +325,30 @@
             return new Date(dateString).toLocaleDateString();
         }
         
+        // Plan character limits mapping
+        const planCharacterLimits = {
+            'Basic': 1000000,
+            'Pro': 3000000,
+            'Premium': 5000000,
+            'Enterprise': 10000000
+        };
+        
+        function formatCharacters(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(0) + 'M characters';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(0) + 'K characters';
+            }
+            return num + ' characters';
+        }
+        
+        function updateCharactersFromPlan() {
+            const plan = document.getElementById('editPlan').value;
+            const characters = planCharacterLimits[plan] || 0;
+            document.getElementById('editTokens').value = characters;
+            document.getElementById('editCharactersDisplay').value = formatCharacters(characters);
+        }
+        
         function editUser(id) {
             const user = subscriptions.find(u => u.id === id);
             if (!user) return;
@@ -340,10 +357,12 @@
             document.getElementById('editEmail').value = user.email;
             document.getElementById('editPassword').value = '';
             document.getElementById('editPlan').value = user.plan;
-            document.getElementById('editTokens').value = user.tokens;
             document.getElementById('editStartDate').value = user.startDate;
             document.getElementById('editExpiryDate').value = user.expiryDate;
             document.getElementById('editStatus').value = user.status;
+            
+            // Auto-update characters based on selected plan
+            updateCharactersFromPlan();
             
             const modal = new bootstrap.Modal(document.getElementById('editModal'));
             modal.show();

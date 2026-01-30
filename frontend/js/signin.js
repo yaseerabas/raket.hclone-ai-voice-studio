@@ -48,6 +48,18 @@ document.addEventListener("DOMContentLoaded", function() {
     try {
       // Check if admin credentials
       if (checkAdminLogin(email, password)) {
+        // Clear ALL previous user data before storing admin data
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('user_type');
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem('current_user');
+        localStorage.removeItem('totalCharactersUsed');
+        localStorage.removeItem('totalCharactersLimit');
+        localStorage.removeItem('charactersRemaining');
+        localStorage.removeItem('userProfilePic');
+        sessionStorage.removeItem('current_audio_id');
+        sessionStorage.removeItem('current_audio_url');
+        
         // Store admin token for API calls
         const adminToken = 'admin_' + btoa(email + ':' + password);
         localStorage.setItem('jwt_token', adminToken);
@@ -66,6 +78,19 @@ document.addEventListener("DOMContentLoaded", function() {
       
       const response = await API.login(credentials);
       
+      // Clear ALL previous user data before storing new user data
+      // This ensures no stale data from previous sessions
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user_type');
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem('current_user');
+      localStorage.removeItem('totalCharactersUsed');
+      localStorage.removeItem('totalCharactersLimit');
+      localStorage.removeItem('charactersRemaining');
+      localStorage.removeItem('userProfilePic');
+      sessionStorage.removeItem('current_audio_id');
+      sessionStorage.removeItem('current_audio_url');
+      
       // Store JWT token
       if (response.token) {
         localStorage.setItem('jwt_token', response.token);
@@ -83,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function() {
       }));
       
       console.log('User login successful');
-      window.location.replace("index.html");
+      window.location.replace("dashboard.html");
       
     } catch (error) {
       console.error('Login error:', error);

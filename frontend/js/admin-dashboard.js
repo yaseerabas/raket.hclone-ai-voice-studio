@@ -8,13 +8,13 @@ async function loadRecentActivity() {
     });
 
     if (response.activity && response.activity.length > 0) {
-      const activityContainer = document.querySelector('.list-group');
+      const activityContainer = document.getElementById('recentActivityList');
       if (activityContainer) {
         activityContainer.innerHTML = response.activity.map(activity => `
           <div class="list-group-item border-0 px-0">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <strong>${activity.user_email}</strong> - ${activity.plan_name} Plan activated
+                <strong>${activity.user_email}</strong> - ${activity.plan_name} ${activity.status === 'active' ? 'activated' : activity.status}
               </div>
               <small class="text-muted">${formatTimeAgo(activity.timestamp)}</small>
             </div>

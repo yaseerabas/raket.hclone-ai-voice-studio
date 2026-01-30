@@ -1,6 +1,6 @@
-// Admin settings - ye values admin dashboard se aayengi
+// Admin settings - these values are loaded from the backend API
 let adminSettings = {
-  maxCharacters: 60000, // Default value, admin se update hogi
+  maxCharacters: 0, // Total characters in plan (0 means no subscription)
   charactersRemaining: 0 // Actual remaining characters from usage
 };
 
@@ -174,37 +174,54 @@ function updateCharacterCount() {
 }
 
 // Function to update status card after voice generation
-function updateUsageStats(charactersUsed) {
+function updateUsageStats(charactersUsed, charactersRemaining = null, totalCharacters = null) {
   const usedChars = document.getElementById('usedChars');
+  const remainingCharsEl = document.getElementById('remainingChars');
   const totalChars = document.getElementById('totalChars');
   const usageLabel = document.getElementById('usageLabel');
   const progressFill = document.getElementById('progressFill');
   
-  const maxChars = adminSettings.maxCharacters;
+  // Ensure numeric values (handle string inputs)
+  const usedNum = parseInt(charactersUsed) || 0;
+  const maxChars = parseInt(totalCharacters !== null ? totalCharacters : adminSettings.maxCharacters) || 0;
+  const remaining = parseInt(charactersRemaining !== null ? charactersRemaining : adminSettings.charactersRemaining) || 0;
   
-  // Handle division by zero
-  let usagePercent = 0;
-  if (maxChars > 0) {
-    usagePercent = ((charactersUsed / maxChars) * 100).toFixed(1);
-  } else if (charactersUsed > 0) {
-    usagePercent = 100;
+  // Calculate usage percent - based on characters USED vs total
+  // If total is 0, check if we can calculate from used + remaining
+  let effectiveTotal = maxChars;
+  if (effectiveTotal === 0 && (usedNum > 0 || remaining > 0)) {
+    effectiveTotal = usedNum + remaining;
   }
   
-  // Update top status card
-  usedChars.textContent = charactersUsed.toLocaleString();
-  totalChars.textContent = maxChars.toLocaleString();
-  usageLabel.textContent = `Usage: ${usagePercent}%`;
-  progressFill.style.width = `${usagePercent}%`;
+  let usagePercent = 0;
+  if (effectiveTotal > 0) {
+    usagePercent = ((usedNum / effectiveTotal) * 100).toFixed(1);
+  }
   
-  // Change colors based on usage
-  if (maxChars === 0) {
-    progressFill.style.background = '#ff4d4d';  // Red for no subscription
-  } else if (charactersUsed > maxChars * 0.9) {
-    progressFill.style.background = '#ff4d4d';
-  } else if (charactersUsed > maxChars * 0.7) {
-    progressFill.style.background = '#ffa500';
-  } else {
-    progressFill.style.background = '#4ecca3';
+  console.log('updateUsageStats:', { usedNum, remaining, maxChars, effectiveTotal, usagePercent });  // Debug log
+  
+  // Update top status card
+  if (usedChars) usedChars.textContent = usedNum.toLocaleString();
+  if (remainingCharsEl) remainingCharsEl.textContent = remaining.toLocaleString();
+  if (totalChars) totalChars.textContent = effectiveTotal.toLocaleString();
+  if (usageLabel) usageLabel.textContent = `Usage: ${usagePercent}%`;
+  
+  // Update progress bar width
+  if (progressFill) {
+    const widthPercent = Math.min(parseFloat(usagePercent), 100);
+    progressFill.style.width = widthPercent + '%';
+    console.log('Progress bar width set to:', widthPercent + '%');  // Debug log
+    
+    // Change colors based on usage
+    if (effectiveTotal === 0) {
+      progressFill.style.background = '#ff4d4d';  // Red for no subscription
+    } else if (widthPercent > 90) {
+      progressFill.style.background = '#ff4d4d';  // Red for nearly full
+    } else if (widthPercent > 70) {
+      progressFill.style.background = '#ffa500';  // Orange for 70-90%
+    } else {
+      progressFill.style.background = 'linear-gradient(90deg, #4ecca3, #44a08d)';  // Green gradient
+    }
   }
 }
 
@@ -327,9 +344,15 @@ window.onload = async function() {
   // Load language data first
   await loadLanguageData();
   
+  // Setup dropdowns (initial setup - will be refreshed after voices load)
   setupDropdowns();
-  await loadUserDashboard();
-  await loadVoiceClones();
+  
+  // Load dashboard data and voice clones in parallel for faster loading
+  await Promise.all([
+    loadUserDashboard(),
+    loadVoiceClones()
+  ]);
+  
   loadProfilePicture();
   
   // Update character count after dashboard data is loaded
@@ -342,7 +365,14 @@ window.onload = async function() {
 // Load user dashboard data from API
 async function loadUserDashboard() {
   try {
+    console.log('Loading dashboard data...');  // Debug log
     const dashboardData = await API.getUserDashboard();
+    console.log('Dashboard API response:', dashboardData);  // Debug log
+    
+    // Get status badge element
+    const statusBadge = document.getElementById('statusBadge');
+    const planInfo = document.getElementById('planInfo');
+    const remainingCharsEl = document.getElementById('remainingChars');
     
     // Update user info
     if (dashboardData.user) {
@@ -359,76 +389,93 @@ async function loadUserDashboard() {
       }));
     }
     
-    // Update usage stats if available
-    if (dashboardData.usage) {
-      const charactersUsed = dashboardData.usage.characters_used || 0;
-      const totalCharacters = dashboardData.usage.total_characters || 0;
+    // Check if user has a subscription
+    const hasSubscription = dashboardData.user && dashboardData.user.has_subscription;
+    console.log('Has subscription:', hasSubscription);  // Debug log
+    
+    if (!hasSubscription) {
+      console.log('No subscription - showing 0 usage');  // Debug log
+      // User has no subscription - show clear "No Subscription" state
+      adminSettings.maxCharacters = 0;
+      adminSettings.charactersRemaining = 0;
+      document.getElementById('textInput').setAttribute('maxlength', '0');
       
-      // Check if user has a subscription
-      const hasSubscription = dashboardData.user && dashboardData.user.has_subscription;
+      // Update status badge
+      if (statusBadge) {
+        statusBadge.textContent = 'No Subscription';
+        statusBadge.style.background = '#ff6b6b';
+      }
       
-      if (!hasSubscription) {
-        // User has no subscription - show 0 credits and buy subscription message
-        adminSettings.maxCharacters = 0;
-        adminSettings.charactersRemaining = 0;
-        document.getElementById('textInput').setAttribute('maxlength', '0');
-        
-        // Update display to show 0 credits
-        updateUsageStats(0);
-        document.getElementById('totalChars').textContent = '0';
-        document.getElementById('usedChars').textContent = '0';
-        
-        // Add a visual indicator for no subscription
-        const statusCard = document.querySelector('.status-card');
-        if (statusCard && !document.getElementById('subscriptionAlert')) {
-          const alert = document.createElement('div');
-          alert.id = 'subscriptionAlert';
-          alert.style.cssText = 'background: #ff6b6b; color: white; padding: 12px; border-radius: 8px; margin-top: 16px; text-align: center; font-weight: 500;';
-          alert.innerHTML = '⚠️ No Active Subscription - <a href="pricing.html" style="color: #fff; text-decoration: underline; font-weight: bold;">Buy Subscription</a> to start generating voices!';
-          statusCard.appendChild(alert);
-        }
-      } else {
-        // User has subscription - show proper credits
-        const charactersRemaining = dashboardData.usage.characters_remaining || 0;
-        
-        // Update admin settings with user's plan limit and remaining characters
-        adminSettings.maxCharacters = totalCharacters;
-        adminSettings.charactersRemaining = charactersRemaining;
-        document.getElementById('textInput').setAttribute('maxlength', totalCharacters);
-        
-        // Update display
-        updateUsageStats(charactersUsed);
-        document.getElementById('totalChars').textContent = totalCharacters.toLocaleString();
-        
-        // Remove subscription alert if it exists
-        const existingAlert = document.getElementById('subscriptionAlert');
-        if (existingAlert) {
-          existingAlert.remove();
-        }
-        
-        // Show subscription info in status card
-        if (dashboardData.subscription && dashboardData.subscription.plan_name) {
-          const statusCard = document.querySelector('.status-card');
-          const projectName = statusCard.querySelector('.project-name');
-          if (projectName && !document.getElementById('planInfo')) {
-            const planInfo = document.createElement('div');
-            planInfo.id = 'planInfo';
-            planInfo.style.cssText = 'font-size: 12px; color: #4ecca3; margin-top: 4px;';
-            planInfo.textContent = `Plan: ${dashboardData.subscription.plan_name}`;
-            projectName.appendChild(planInfo);
-          }
-        }
+      // Clear plan info
+      if (planInfo) {
+        planInfo.textContent = '';
+      }
+      
+      // Update display to show 0 values
+      updateUsageStats(0, 0, 0);
+      
+      // Add a visual indicator for no subscription
+      const statusCard = document.querySelector('.status-card');
+      if (statusCard && !document.getElementById('subscriptionAlert')) {
+        const alert = document.createElement('div');
+        alert.id = 'subscriptionAlert';
+        alert.style.cssText = 'background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: white; padding: 16px; border-radius: 10px; margin-top: 16px; text-align: center; font-weight: 500; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);';
+        alert.innerHTML = '⚠️ No Active Subscription - <a href="pricing.html" style="color: #fff; text-decoration: underline; font-weight: bold;">Get a Plan</a> to start generating voices!';
+        statusCard.appendChild(alert);
+      }
+      
+    } else {
+      // User has subscription - show accurate subscription data
+      const charactersUsed = dashboardData.usage ? dashboardData.usage.characters_used || 0 : 0;
+      const totalCharacters = dashboardData.usage ? dashboardData.usage.total_characters || 0 : 0;
+      const charactersRemaining = dashboardData.usage ? dashboardData.usage.characters_remaining || 0 : 0;
+      
+      console.log('Subscription data:', { charactersUsed, totalCharacters, charactersRemaining });  // Debug log
+      
+      // Update admin settings with user's plan limit and remaining characters
+      adminSettings.maxCharacters = totalCharacters;
+      adminSettings.charactersRemaining = charactersRemaining;
+      document.getElementById('textInput').setAttribute('maxlength', totalCharacters.toString());
+      
+      // Update status badge to Active
+      if (statusBadge) {
+        statusBadge.textContent = 'Active';
+        statusBadge.style.background = '#4ecca3';
+      }
+      
+      // Show plan name
+      if (planInfo && dashboardData.subscription && dashboardData.subscription.plan_name) {
+        planInfo.textContent = `(${dashboardData.subscription.plan_name} Plan)`;
+      }
+      
+      // Update display with accurate values
+      updateUsageStats(charactersUsed, charactersRemaining, totalCharacters);
+      
+      console.log('Called updateUsageStats with:', { charactersUsed, charactersRemaining, totalCharacters });  // Debug log
+      
+      // Remove subscription alert if it exists
+      const existingAlert = document.getElementById('subscriptionAlert');
+      if (existingAlert) {
+        existingAlert.remove();
       }
       
       // Store usage in localStorage
       localStorage.setItem('totalCharactersUsed', charactersUsed.toString());
       localStorage.setItem('totalCharactersLimit', totalCharacters.toString());
+      localStorage.setItem('charactersRemaining', charactersRemaining.toString());
     }
     
-    console.log('Dashboard data loaded successfully');
+    console.log('Dashboard data loaded successfully:', dashboardData);
     
   } catch (error) {
     console.error('Failed to load dashboard data:', error);
+    
+    // Update status badge to show error state
+    const statusBadge = document.getElementById('statusBadge');
+    if (statusBadge) {
+      statusBadge.textContent = 'Error';
+      statusBadge.style.background = '#ffa500';
+    }
     
     // Load from localStorage as fallback
     const storedUser = localStorage.getItem('current_user');
@@ -439,15 +486,37 @@ async function loadUserDashboard() {
     
     const storedUsage = parseInt(localStorage.getItem('totalCharactersUsed') || '0');
     const storedLimit = parseInt(localStorage.getItem('totalCharactersLimit') || '0');
-    updateUsageStats(storedUsage);
-    if (storedLimit > 0) {
-      document.getElementById('totalChars').textContent = storedLimit.toLocaleString();
-    }
+    const storedRemaining = parseInt(localStorage.getItem('charactersRemaining') || '0');
+    
+    adminSettings.maxCharacters = storedLimit;
+    adminSettings.charactersRemaining = storedRemaining;
+    
+    updateUsageStats(storedUsage, storedRemaining, storedLimit);
   }
 }
 
 // Function to load voice clones from API
 async function loadVoiceClones() {
+  const voiceCloneDropdown = document.querySelector('[data-dropdown="voice-clone"] .dropdown-options');
+  
+  if (!voiceCloneDropdown) {
+    console.error('Voice clone dropdown not found in DOM');
+    return;
+  }
+  
+  // Show loading state immediately
+  voiceCloneDropdown.innerHTML = `
+    <div class="dropdown-search">
+      <input type="text" placeholder="Search voice clones..." class="clone-search" />
+    </div>
+    <div class="voice-loading-state" style="padding: 20px; text-align: center; color: #888;">
+      <svg width="24" height="24" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+        <circle cx="12" cy="12" r="10" stroke="#4ecca3" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
+      </svg>
+      <p style="margin-top: 8px; font-size: 13px;">Loading voices...</p>
+    </div>
+  `;
+  
   try {
     // Load all available voices (default + user's clones) from new endpoint
     const response = await API.request('/voice/available-voices', {
@@ -455,7 +524,7 @@ async function loadVoiceClones() {
       headers: API.getAuthHeaders()
     });
     
-    console.log('Available voices API response:', response);  // Debug log
+    console.log('Available voices API response:', response);
     
     const voices = response.voices || [];
     
@@ -465,107 +534,101 @@ async function loadVoiceClones() {
     
     console.log(`Loaded ${voices.length} available voices (${defaultVoices.length} default, ${customVoices.length} custom)`);
     
-    const voiceCloneDropdown = document.querySelector('[data-dropdown="voice-clone"] .dropdown-options');
+    // Clear loading state and build the options
+    voiceCloneDropdown.innerHTML = '';
     
-    if (voiceCloneDropdown) {
-      // Clear all existing options
-      voiceCloneDropdown.innerHTML = '';
+    // Add search bar
+    const searchDiv = document.createElement('div');
+    searchDiv.className = 'dropdown-search';
+    searchDiv.innerHTML = '<input type="text" placeholder="Search voice clones..." class="clone-search" />';
+    voiceCloneDropdown.appendChild(searchDiv);
+    
+    // Add default voices section header
+    if (defaultVoices.length > 0) {
+      const defaultHeader = document.createElement('div');
+      defaultHeader.className = 'dropdown-section-header';
+      defaultHeader.style.cssText = 'padding: 8px 12px; color: #4ecca3; font-size: 12px; font-weight: bold; border-bottom: 1px solid #333;';
+      defaultHeader.textContent = '📢 Default Voices';
+      voiceCloneDropdown.appendChild(defaultHeader);
       
-      // Add search bar
-      const searchDiv = document.createElement('div');
-      searchDiv.className = 'dropdown-search';
-      searchDiv.innerHTML = '<input type="text" placeholder="Search voice clones..." class="clone-search" />';
-      voiceCloneDropdown.appendChild(searchDiv);
-      
-      // Add default voices section header
-      if (defaultVoices.length > 0) {
-        const defaultHeader = document.createElement('div');
-        defaultHeader.className = 'dropdown-section-header';
-        defaultHeader.style.cssText = 'padding: 8px 12px; color: #4ecca3; font-size: 12px; font-weight: bold; border-bottom: 1px solid #333;';
-        defaultHeader.textContent = '📢 Default Voices';
-        voiceCloneDropdown.appendChild(defaultHeader);
-        
-        // Add default voice options
-        defaultVoices.forEach(voice => {
-          const option = document.createElement('div');
-          option.className = 'dropdown-option';
-          option.setAttribute('data-value', voice.user_id);
-          option.innerHTML = `
-            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="${voice.gender === 'male' ? '#4dabf7' : '#f783ac'}" stroke-width="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            </svg>
-            ${voice.voice_name}
-            <span style="font-size: 10px; color: #888; margin-left: 8px;">(Default)</span>
-          `;
-          voiceCloneDropdown.appendChild(option);
-        });
-      }
-      
-      // Add custom voices section header if user has cloned voices
-      if (customVoices.length > 0) {
-        const customHeader = document.createElement('div');
-        customHeader.className = 'dropdown-section-header';
-        customHeader.style.cssText = 'padding: 8px 12px; color: #ffa500; font-size: 12px; font-weight: bold; border-bottom: 1px solid #333; margin-top: 8px;';
-        customHeader.textContent = '🎤 My Cloned Voices';
-        voiceCloneDropdown.appendChild(customHeader);
-        
-        // Add user's custom voice clones
-        customVoices.forEach(voice => {
-          const option = document.createElement('div');
-          option.className = 'dropdown-option';
-          option.setAttribute('data-value', voice.user_id);
-          option.innerHTML = `
-            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            </svg>
-            ${voice.voice_name}
-          `;
-          voiceCloneDropdown.appendChild(option);
-        });
-      }
-      
-      // If no voices at all, show a message
-      if (voices.length === 0) {
-        const noVoicesMsg = document.createElement('div');
-        noVoicesMsg.style.cssText = 'padding: 12px; color: #888; text-align: center; font-size: 13px;';
-        noVoicesMsg.textContent = 'No voices available';
-        voiceCloneDropdown.appendChild(noVoicesMsg);
-      }
-      
-      // Add search functionality
-      const searchInput = voiceCloneDropdown.querySelector('.clone-search');
-      if (searchInput) {
-        searchInput.oninput = function(e) {
-          e.stopPropagation();
-          const searchTerm = this.value.toLowerCase();
-          const options = voiceCloneDropdown.querySelectorAll('.dropdown-option');
-          
-          options.forEach(option => {
-            const text = option.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-              option.style.display = 'block';
-            } else {
-              option.style.display = 'none';
-            }
-          });
-        };
-        
-        searchInput.onclick = function(e) {
-          e.stopPropagation();
-        };
-      }
-      
-      // Re-setup dropdown functionality for new options
-      setupDropdowns();
-    } else {
-      console.error('Voice clone dropdown not found in DOM');
+      // Add default voice options
+      defaultVoices.forEach(voice => {
+        const option = document.createElement('div');
+        option.className = 'dropdown-option';
+        option.setAttribute('data-value', voice.user_id);
+        option.innerHTML = `
+          <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="${voice.gender === 'male' ? '#4dabf7' : '#f783ac'}" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          </svg>
+          ${voice.voice_name}
+          <span style="font-size: 10px; color: #888; margin-left: 8px;">(Default)</span>
+        `;
+        voiceCloneDropdown.appendChild(option);
+      });
     }
+    
+    // Add custom voices section header if user has cloned voices
+    if (customVoices.length > 0) {
+      const customHeader = document.createElement('div');
+      customHeader.className = 'dropdown-section-header';
+      customHeader.style.cssText = 'padding: 8px 12px; color: #ffa500; font-size: 12px; font-weight: bold; border-bottom: 1px solid #333; margin-top: 8px;';
+      customHeader.textContent = '🎤 My Cloned Voices';
+      voiceCloneDropdown.appendChild(customHeader);
+      
+      // Add user's custom voice clones
+      customVoices.forEach(voice => {
+        const option = document.createElement('div');
+        option.className = 'dropdown-option';
+        option.setAttribute('data-value', voice.user_id);
+        option.innerHTML = `
+          <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="#4ecca3" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          </svg>
+          ${voice.voice_name}
+        `;
+        voiceCloneDropdown.appendChild(option);
+      });
+    }
+    
+    // If no voices at all, show a message
+    if (voices.length === 0) {
+      const noVoicesMsg = document.createElement('div');
+      noVoicesMsg.style.cssText = 'padding: 12px; color: #888; text-align: center; font-size: 13px;';
+      noVoicesMsg.textContent = 'No voices available';
+      voiceCloneDropdown.appendChild(noVoicesMsg);
+    }
+    
+    // Add search functionality
+    const searchInput = voiceCloneDropdown.querySelector('.clone-search');
+    if (searchInput) {
+      searchInput.oninput = function(e) {
+        e.stopPropagation();
+        const searchTerm = this.value.toLowerCase();
+        const options = voiceCloneDropdown.querySelectorAll('.dropdown-option');
+        
+        options.forEach(option => {
+          const text = option.textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
+            option.style.display = 'block';
+          } else {
+            option.style.display = 'none';
+          }
+        });
+      };
+      
+      searchInput.onclick = function(e) {
+        e.stopPropagation();
+      };
+    }
+    
+    // Re-setup dropdown functionality for new options
+    setupDropdowns();
     
   } catch (error) {
     console.error('Failed to load voice clones:', error);
-    // Fallback to local storage
+    // Show error in dropdown
     loadVoiceClonesLocal();
   }
 }

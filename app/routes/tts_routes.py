@@ -60,8 +60,8 @@ def generate_tts():
         
         # Check if voice_model is a speaker_id (from cloned voice) or default voice type
         # Default voices: "default_male_01", "default_female_01"
-        # Cloned voice IDs are in format "user-XXX-YYYY"
-        if voice_model.startswith('user-') or voice_model.startswith('default_'):
+        # Cloned voice IDs are in format "user{numbers}" (e.g., "user1234567890")
+        if voice_model.startswith('user') or voice_model.startswith('default_'):
             speaker_id = voice_model  # Use the cloned voice or default speaker_id
         else:
             # Fallback for legacy voice_model values like 'male' or 'female'
@@ -70,23 +70,27 @@ def generate_tts():
             else:
                 speaker_id = 'default_male_01'
         
-        # Prepare TTS API payload for the new endpoint
+        # Prepare TTS API payload
         tts_payload = {
             "text": text,
             "language": language,
             "speaker_id": speaker_id
         }
         
-        # Add optional language parameters if provided
-        if source_language:
+        # Determine which endpoint to use based on whether translation is needed
+        # Use /translate-tts only when BOTH src_lang and tgt_lang are provided
+        # Otherwise use /tts for simple voice generation
+        if source_language and target_language:
             tts_payload["src_lang"] = source_language
-        if target_language:
             tts_payload["tgt_lang"] = target_language
+            tts_api_url = f"{TTS_BASE_URL}/translate-tts"
+            print(f"Using translate-tts endpoint with translation from {source_language} to {target_language}")
+        else:
+            tts_api_url = f"{TTS_BASE_URL}/tts"
+            print(f"Using tts endpoint (no translation)")
             
         print(f"TTS API Payload: {tts_payload}")  # Debug log
-        
-        # Call external TTS API
-        tts_api_url = f"{TTS_BASE_URL}/translate-tts"
+        print(f"TTS API URL: {tts_api_url}")  # Debug log
         
         try:
             response = requests.post(tts_api_url, json=tts_payload, timeout=60)
@@ -231,6 +235,8 @@ def download_audio_alt(audio_id):
 # -------------------
 # Voice Cloning
 # -------------------
+ALLOWED_VOICE_EXTENSIONS = {'.wav', '.mp3', '.flac', '.ogg'}
+
 @tts_bp.route('/clone-voice', methods=['POST'])
 @jwt_required()
 def clone_voice():
@@ -244,11 +250,24 @@ def clone_voice():
         file = request.files['voice_file']
         voice_name = request.form['voice_name']
         
-        # Generate unique user_id for the clone
-        import random
-        unique_id = f"user-{random.randint(100, 999)}-{datetime.utcnow().year}"
+        # Validate file extension
+        if file.filename:
+            file_ext = os.path.splitext(file.filename)[1].lower()
+            if file_ext not in ALLOWED_VOICE_EXTENSIONS:
+                return jsonify({
+                    "error": f"Unsupported file type. Please upload .wav, .mp3, .flac, or .ogg files only."
+                }), 400
+        else:
+            return jsonify({"error": "No filename provided"}), 400
         
-        # Prepare file for external API
+        # Generate unique user_id for the clone in format "user" + numbers
+        # Format: user{user_id}{timestamp_last4}{random2}
+        import random
+        timestamp_suffix = str(int(datetime.utcnow().timestamp()))[-4:]
+        random_suffix = str(random.randint(10, 99))
+        unique_id = f"user{user_id}{timestamp_suffix}{random_suffix}"
+        
+        # Prepare file for external API - only send user_id and voice_file
         files = {'voice_file': (file.filename, file.stream, file.content_type)}
         data = {'user_id': unique_id}
         
@@ -333,8 +352,8 @@ def list_voices():
 @jwt_required()
 def get_available_voices():
     """
-    Fetches all available voices for the current user from external API.
-    - Default voices (default_male_01, default_female_01) are visible to all users if available in API
+    Fetches all available voices for the current user.
+    - Default voices (default_male_01, default_female_01) are ALWAYS visible to all users
     - User's personal cloned voices are only visible to themselves
     """
     try:
@@ -342,6 +361,7 @@ def get_available_voices():
         user_id = int(identity)
         
         available_voices = []
+        default_voices_from_api = set()  # Track which default voices came from API
         
         # Get user's cloned voices from local DB for matching
         user_clones = ClonedVoice.query.filter_by(user_id=user_id).all()
@@ -364,11 +384,7 @@ def get_available_voices():
                     voice_user_id = voice.get('user_id', '')
                     is_available = voice.get('available', False)
                     
-                    # Skip unavailable voices
-                    if not is_available:
-                        continue
-                    
-                    # Check if it's a default voice
+                    # Check if it's a default voice - always include these
                     if voice_user_id in ['default_male_01', 'default_female_01']:
                         # Determine gender from user_id
                         gender = 'female' if 'female' in voice_user_id else 'male'
@@ -379,12 +395,13 @@ def get_available_voices():
                             "voice_name": voice_name,
                             "path": voice.get('path', ''),
                             "is_default": True,
-                            "available": True,
+                            "available": is_available,
                             "gender": gender
                         })
+                        default_voices_from_api.add(voice_user_id)
                     
                     # Check if the voice belongs to the current user (cloned voice)
-                    elif voice_user_id in user_speaker_ids:
+                    elif voice_user_id in user_speaker_ids and is_available:
                         # Find the matching local clone for additional info
                         matching_clone = next((c for c in user_clones if c.speaker_id == voice_user_id), None)
                         
@@ -399,7 +416,28 @@ def get_available_voices():
                         
         except requests.exceptions.RequestException as e:
             print(f"Error fetching external voices: {str(e)}")  # Debug log
-            # If external API fails, only return user's local cloned voices
+            # If external API fails, we'll add default voices manually below
+        
+        # ALWAYS ensure default voices are present (even if external API failed or didn't return them)
+        if 'default_male_01' not in default_voices_from_api:
+            available_voices.insert(0, {
+                "user_id": "default_male_01",
+                "voice_name": "Default Male Voice",
+                "path": "",
+                "is_default": True,
+                "available": True,
+                "gender": "male"
+            })
+        
+        if 'default_female_01' not in default_voices_from_api:
+            available_voices.insert(1 if len(available_voices) > 0 else 0, {
+                "user_id": "default_female_01",
+                "voice_name": "Default Female Voice",
+                "path": "",
+                "is_default": True,
+                "available": True,
+                "gender": "female"
+            })
         
         # Also add user's local cloned voices that might not be in external API yet
         existing_user_ids = [v['user_id'] for v in available_voices]
