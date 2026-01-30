@@ -6,7 +6,7 @@ from datetime import timedelta
 class Config:
     # MySQL database URI
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'mysql+pymysql://root:@localhost/tts_saas'
+        'mysql+pymysql://raket_user:StrongPass_123!@localhost:3306/raket_ai'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT config
