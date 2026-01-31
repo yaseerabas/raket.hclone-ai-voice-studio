@@ -1,6 +1,6 @@
 # app/__init__.py
 
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_jwt_extended import JWTManager
@@ -28,6 +28,27 @@ def create_app():
          allow_headers=['Content-Type', 'Authorization'],
          expose_headers=['X-Audio-Id', 'X-Characters-Used', 'X-Characters-Remaining', 'Content-Disposition'],
          supports_credentials=False)  # Set to False when using origins=['*']
+    
+    # Add CORS headers to ALL responses (backup for streaming)
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Expose-Headers'] = 'X-Audio-Id, X-Characters-Used, X-Characters-Remaining, Content-Disposition'
+        return response
+    
+    # Handle OPTIONS preflight requests globally
+    @app.before_request
+    def handle_preflight():
+        if request.method == 'OPTIONS':
+            response = app.make_default_options_response()
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response.headers['Access-Control-Expose-Headers'] = 'X-Audio-Id, X-Characters-Used, X-Characters-Remaining, Content-Disposition'
+            response.headers['Access-Control-Max-Age'] = '86400'
+            return response
 
     # Register blueprints (routes)
     from app.routes.auth_routes import auth_bp
