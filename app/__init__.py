@@ -21,12 +21,13 @@ def create_app():
     ma.init_app(app)
     jwt.init_app(app)
     
-    # Enhanced CORS configuration
+    # Enhanced CORS configuration with exposed headers for streaming
     CORS(app, 
          origins=['*'],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
          allow_headers=['Content-Type', 'Authorization'],
-         supports_credentials=True)
+         expose_headers=['X-Audio-Id', 'X-Characters-Used', 'X-Characters-Remaining', 'Content-Disposition'],
+         supports_credentials=False)  # Set to False when using origins=['*']
 
     # Register blueprints (routes)
     from app.routes.auth_routes import auth_bp

@@ -154,13 +154,23 @@ def generate_tts():
 # -------------------
 # Stream TTS Audio (for long text with timeout prevention)
 # -------------------
-@tts_bp.route('/stream', methods=['POST'])
-@jwt_required()
+@tts_bp.route('/stream', methods=['POST', 'OPTIONS'])
+@jwt_required(optional=True)
 def stream_tts():
     """
     Streaming TTS endpoint that returns audio directly as a stream.
     This prevents timeout issues for long text generation.
     """
+    # Handle preflight OPTIONS request for CORS
+    if request.method == 'OPTIONS':
+        response = Response()
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Expose-Headers'] = 'X-Audio-Id, X-Characters-Used, X-Characters-Remaining'
+        response.headers['Access-Control-Max-Age'] = '86400'
+        return response, 200
+    
     try:
         identity = get_jwt_identity()
         print(f"Stream TTS - JWT Identity: {identity}, Type: {type(identity)}")
@@ -267,7 +277,7 @@ def stream_tts():
         
         print(f"Stream audio initiated: audio_id={audio_id}")
         
-        # Return streaming response with audio headers
+        # Return streaming response with audio headers and CORS headers
         response = Response(
             stream_with_context(generate_audio_stream()),
             mimetype='audio/wav',
@@ -277,7 +287,12 @@ def stream_tts():
                 'X-Characters-Remaining': str(usage.characters_remaining),
                 'Content-Disposition': f'inline; filename="audio_{audio_id}.wav"',
                 'Cache-Control': 'no-cache',
-                'Transfer-Encoding': 'chunked'
+                'Transfer-Encoding': 'chunked',
+                # CORS headers for streaming
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                'Access-Control-Expose-Headers': 'X-Audio-Id, X-Characters-Used, X-Characters-Remaining, Content-Disposition'
             }
         )
         return response
