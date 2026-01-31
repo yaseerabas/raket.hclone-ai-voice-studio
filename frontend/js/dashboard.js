@@ -659,7 +659,7 @@ function loadVoiceClonesLocal() {
   }
 }
 
-// Voice generation functionality with API integration
+// Voice generation functionality with API integration (Streaming)
 async function generateVoice(event) {
   // Prevent form submission and page reload
   if (event) {
@@ -707,13 +707,13 @@ async function generateVoice(event) {
   const targetLanguage = document.querySelector('[data-dropdown="target-language"]').getAttribute('data-selected');
   const voiceModel = getSelectedVoiceModel();
   
-  console.log('Generating voice with:', { 
+  console.log('Generating voice with streaming:', { 
     text: text.substring(0, 50) + '...', 
     tone, 
     sourceLanguage, 
     targetLanguage, 
     voiceModel,
-    speaker_id: voiceModel  // This is the speaker_id that will be sent to backend
+    speaker_id: voiceModel
   });
   
   // Show loading state
@@ -723,11 +723,11 @@ async function generateVoice(event) {
   generateBtn.disabled = true;
   
   try {
-    // API call for TTS generation
+    // Prepare streaming TTS data
     const ttsData = {
       text: text,
       language: tone,
-      voice_model: voiceModel
+      speaker_id: voiceModel
     };
     
     // Only include source_language if it's selected (not default placeholder)
@@ -738,9 +738,10 @@ async function generateVoice(event) {
     // Only include target_language if it's selected (not default placeholder)
     if (targetLanguage && !targetLanguage.includes('Select') && targetLanguage !== 'Target Language') {
       ttsData.target_language = targetLanguage;
-    };
+    }
     
-    const response = await fetch(`${API_CONFIG.BASE_URL}/voice/generate`, {
+    // Use streaming endpoint for better timeout handling
+    const response = await fetch(`${API_CONFIG.BASE_URL}/voice/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -768,7 +769,21 @@ async function generateVoice(event) {
       throw new Error(errorMessage);
     }
     
-    const responseData = await response.json();
+    // Get audio metadata from headers
+    const audioId = response.headers.get('X-Audio-Id');
+    const charactersUsed = response.headers.get('X-Characters-Used');
+    const charactersRemaining = response.headers.get('X-Characters-Remaining');
+    
+    console.log('Stream response headers:', { audioId, charactersUsed, charactersRemaining });
+    
+    // Stream audio to blob
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Update admin settings with new remaining characters
+    if (charactersRemaining) {
+      adminSettings.charactersRemaining = parseInt(charactersRemaining);
+    }
     
     // Reload dashboard to get updated usage stats from server
     await loadUserDashboard();
@@ -781,62 +796,41 @@ async function generateVoice(event) {
     const audioElement = audioPreview.querySelector('audio');
     const placeholder = audioPreview.querySelector('.audio-placeholder');
     
-    if (responseData.file_path || responseData.audio_id) {
-      // Create download URL for generated audio
-      let audioUrl;
-      
-      if (responseData.audio_id) {
-        audioUrl = `${API_CONFIG.BASE_URL}/voice/stream/${responseData.audio_id}`;
-        audioElement.setAttribute('data-audio-id', responseData.audio_id);
-        // Store audio_id in sessionStorage to persist across page operations
-        sessionStorage.setItem('current_audio_id', responseData.audio_id);
-        sessionStorage.setItem('current_audio_url', audioUrl);
-        
-        // Fetch audio as blob for preview (audio element can't use custom headers)
-        try {
-          const audioResponse = await fetch(audioUrl, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token.replace('Bearer ', '')}`,
-              'Accept': 'audio/mpeg, audio/wav, audio/mp3, application/octet-stream'
-            }
-          });
-          
-          if (audioResponse.ok) {
-            const audioBlob = await audioResponse.blob();
-            const blobUrl = URL.createObjectURL(audioBlob);
-            audioElement.src = blobUrl;
-            
-            // Store blob URL for later cleanup
-            if (audioElement._blobUrl) {
-              URL.revokeObjectURL(audioElement._blobUrl);
-            }
-            audioElement._blobUrl = blobUrl;
-          }
-        } catch (err) {
-          console.error('Failed to load audio preview:', err);
-        }
-      } else if (responseData.file_path) {
-        // If direct file path is provided, try to stream it
-        audioUrl = `${API_CONFIG.BASE_URL}/voice/stream/${responseData.audio_id || 'latest'}`;
-        audioElement.src = audioUrl;
-      }
-      
-      // Enable audio player and hide placeholder
-      audioElement.removeAttribute('disabled');
-      if (placeholder) {
-        placeholder.style.display = 'none';
-      }
-      audioPreview.style.display = 'block';
-      
-      // Show success message
-      console.log('Voice generated successfully!');
-      showSuccessMessage('Voice generated successfully!');
+    // Cleanup previous blob URL
+    if (audioElement._blobUrl) {
+      URL.revokeObjectURL(audioElement._blobUrl);
     }
     
+    // Set audio source from streamed blob
+    audioElement.src = audioUrl;
+    audioElement._blobUrl = audioUrl;
+    
+    if (audioId) {
+      audioElement.setAttribute('data-audio-id', audioId);
+      sessionStorage.setItem('current_audio_id', audioId);
+      sessionStorage.setItem('current_audio_url', audioUrl);
+    }
+    
+    // Enable audio player and hide placeholder
+    audioElement.removeAttribute('disabled');
+    if (placeholder) {
+      placeholder.style.display = 'none';
+    }
+    audioPreview.style.display = 'block';
+    
+    // Auto-play the generated audio
+    try {
+      await audioElement.play();
+    } catch (playError) {
+      console.log('Auto-play blocked, user can manually play:', playError);
+    }
+    
+    // Show success message
+    console.log('Voice generated successfully via streaming!');
+    showSuccessMessage('Voice generated successfully!');
     
   } catch (error) {
-    console.error('TTS generation error:', error);
+    console.error('TTS streaming error:', error);
     
     let userMessage = 'Failed to generate voice. Please try again.';
     
@@ -848,6 +842,8 @@ async function generateVoice(event) {
       setTimeout(() => {
         window.location.href = 'signin.html';
       }, 2000);
+    } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+      userMessage = 'Request timed out. Please try with shorter text or try again later.';
     } else {
       userMessage = error.message || userMessage;
     }

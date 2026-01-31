@@ -1,5 +1,5 @@
 # app/routes/tts_routes.py
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, Response, stream_with_context
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.audio_file import AudioFile
 from app.models.cloned_voice import ClonedVoice
@@ -13,6 +13,8 @@ from pydub import AudioSegment
 from pydub.generators import Sine
 from dotenv import load_dotenv
 import requests
+import tempfile
+import uuid
 
 load_dotenv()
 
@@ -147,6 +149,143 @@ def generate_tts():
         print(f"Generate TTS error: {str(e)}")  # Debug log
         import traceback
         traceback.print_exc()  # Print full stack trace
+        return jsonify({"error": str(e)}), 500
+
+# -------------------
+# Stream TTS Audio (for long text with timeout prevention)
+# -------------------
+@tts_bp.route('/stream', methods=['POST'])
+@jwt_required()
+def stream_tts():
+    """
+    Streaming TTS endpoint that returns audio directly as a stream.
+    This prevents timeout issues for long text generation.
+    """
+    try:
+        identity = get_jwt_identity()
+        print(f"Stream TTS - JWT Identity: {identity}, Type: {type(identity)}")
+        
+        if not identity:
+            print("No JWT identity found in stream_tts")
+            return jsonify({"error": "Invalid token"}), 401
+            
+        user_id = int(identity)
+        data = request.get_json()
+        print(f"Stream TTS - User ID: {user_id}, Data: {data}")
+        
+        text = data.get('text')
+        if not text:
+            return jsonify({"error": "Text is required"}), 400
+            
+        characters = len(text)
+
+        usage = Usage.query.filter_by(user_id=user_id).first()
+        if not usage or characters > usage.characters_remaining:
+            print(f"Not enough characters: usage={usage}, characters={characters}")
+            return jsonify({"error": "Not enough characters in plan"}), 400
+
+        # Prepare API request
+        language = data.get('language', 'en')
+        source_language = data.get('source_language')
+        target_language = data.get('target_language')
+        speaker_id = data.get('speaker_id', 'default_male_01')
+        
+        # Normalize speaker_id
+        if speaker_id.startswith('user') or speaker_id.startswith('default_'):
+            pass  # Already valid
+        elif speaker_id.lower() == 'female':
+            speaker_id = 'default_female_01'
+        else:
+            speaker_id = 'default_male_01'
+        
+        # Prepare TTS API payload
+        tts_payload = {
+            "text": text,
+            "language": language,
+            "speaker_id": speaker_id
+        }
+        
+        # Determine which endpoint to use
+        if source_language and target_language:
+            tts_payload["src_lang"] = source_language
+            tts_payload["tgt_lang"] = target_language
+            tts_api_url = f"{TTS_BASE_URL}/translate-tts"
+            print(f"Stream: Using translate-tts endpoint")
+        else:
+            tts_api_url = f"{TTS_BASE_URL}/tts"
+            print(f"Stream: Using tts endpoint")
+            
+        print(f"Stream TTS API Payload: {tts_payload}")
+        print(f"Stream TTS API URL: {tts_api_url}")
+        
+        def generate_audio_stream():
+            """Generator function to stream audio data"""
+            try:
+                # Use stream=True for streaming response from external API
+                with requests.post(tts_api_url, json=tts_payload, timeout=300, stream=True) as response:
+                    response.raise_for_status()
+                    
+                    # Check content type - if JSON, we need to handle differently
+                    content_type = response.headers.get('Content-Type', '')
+                    
+                    if 'application/json' in content_type:
+                        # External API returns JSON with file path - download the audio
+                        tts_response = response.json()
+                        print(f"Stream TTS API JSON Response: {tts_response}")
+                        
+                        audio_url = tts_response.get('audio_path')
+                        if audio_url:
+                            if not audio_url.startswith('http'):
+                                audio_url = f"{TTS_BASE_URL}{audio_url}"
+                            
+                            # Stream the audio file
+                            with requests.get(audio_url, timeout=120, stream=True) as audio_response:
+                                audio_response.raise_for_status()
+                                for chunk in audio_response.iter_content(chunk_size=8192):
+                                    if chunk:
+                                        yield chunk
+                    else:
+                        # Direct audio stream
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                yield chunk
+                                
+            except requests.exceptions.RequestException as e:
+                print(f"Stream TTS API Error: {str(e)}")
+                raise e
+        
+        # Update usage before streaming (optimistic update)
+        usage.characters_used += characters
+        usage.characters_remaining -= characters
+        usage.last_generated_at = datetime.utcnow()
+        
+        # Save audio record without file path (streaming doesn't save locally by default)
+        audio = AudioFile(user_id=user_id, file_path="streaming", characters_used=characters)
+        db.session.add(audio)
+        db.session.commit()
+        audio_id = audio.id
+        
+        print(f"Stream audio initiated: audio_id={audio_id}")
+        
+        # Return streaming response with audio headers
+        response = Response(
+            stream_with_context(generate_audio_stream()),
+            mimetype='audio/wav',
+            headers={
+                'X-Audio-Id': str(audio_id),
+                'X-Characters-Used': str(characters),
+                'X-Characters-Remaining': str(usage.characters_remaining),
+                'Content-Disposition': f'inline; filename="audio_{audio_id}.wav"',
+                'Cache-Control': 'no-cache',
+                'Transfer-Encoding': 'chunked'
+            }
+        )
+        return response
+        
+    except Exception as e:
+        print(f"Stream TTS error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 # -------------------

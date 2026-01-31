@@ -16,6 +16,7 @@ const API_CONFIG = {
         TTS: {
             GENERATE_FULL: '/voice/generate-full',
             GENERATE: '/voice/generate',
+            STREAM: '/voice/stream',
             CLONE_VOICE: '/voice/clone-voice',
             LIST_VOICES: '/voice/voices',
             AVAILABLE_VOICES: '/voice/available-voices',

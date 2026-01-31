@@ -85,10 +85,8 @@ Lists available cloned voices (quick overview).
 Response 200:
 ```json
 {
-  "count": 3,
+  "count": 2,
   "voices": [
-    { "user_id": "default_male_01", "path": "app/storage/voices/default_male_o1/voice.wav", "available": true },
-    { "user_id": "default_female_01", "path": "app/storage/voices/default_female_o1/voice.wav", "available": true },
     { "user_id": "user_804", "path": "app/storage/voices/user_804/voice.wav", "available": true }
   ]
 }
@@ -171,6 +169,68 @@ curl -X POST "http://localhost:8000/tts" \
     "language": "en",
     "speaker_id": "default"
   }'
+```
+
+---
+
+## Text-to-Speech Streaming (TTS)
+
+POST /tts/stream
+
+Synthesize speech from text using Qwen3-TTS with **streaming response**. This endpoint is optimized for long audio generation to prevent HTTP timeouts.
+
+The response is a streaming WAV audio file that begins playing as soon as the first chunk is generated. Uses Qwen3-TTS streaming generation mode for minimal latency (~97ms to first audio).
+
+Request body:
+```json
+{
+  "text": "This is a very long text that would normally cause a timeout...",
+  "language": "en",
+  "speaker_id": "default"
+}
+```
+
+Response: `audio/wav` stream (binary audio data)
+
+Notes:
+- Use this endpoint for long texts (> 500 characters) or when the standard `/tts` endpoint times out.
+- The response streams audio chunks as they are generated, so playback can begin immediately.
+- Audio is returned as WAV format (PCM 16-bit, mono).
+- `language` accepts: en, zh, ja, ko, de, fr, ru, pt, es, it. Others fall back to Auto.
+- Supports voice cloning via `speaker_id` if a voice has been uploaded.
+
+Errors:
+- 500 TTS streaming failed: <reason>
+
+Curl example (save to file):
+```bash
+curl -X POST "http://localhost:8000/tts/stream" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "This is a long text that we want to synthesize without timing out. The streaming endpoint returns audio chunks progressively.",
+    "language": "en",
+    "speaker_id": "default"
+  }' \
+  --output speech.wav
+```
+
+JavaScript fetch example (for browser playback):
+```javascript
+const response = await fetch('/tts/stream', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    text: 'Your long text here...',
+    language: 'en',
+    speaker_id: 'default'
+  })
+});
+
+// Stream to audio element
+const blob = await response.blob();
+const audioUrl = URL.createObjectURL(blob);
+const audio = new Audio(audioUrl);
+audio.play();
 ```
 
 ---
@@ -318,4 +378,5 @@ curl -o output.wav "http://localhost:8000/audio/<filename>.wav"
 
 - To use a cloned voice in TTS, first upload a voice for `user_id`, then pass that `speaker_id` in /tts or /translate-tts requests.
 - Long texts are automatically chunked for quality and memory efficiency; the API returns a single concatenated .wav.
+- **For long audio generation**, use `/tts/stream` instead of `/tts` to prevent HTTP timeouts. The streaming endpoint returns audio progressively as it is generated.
 - Health endpoint helps validate model readiness and GPU availability before high-volume requests.
